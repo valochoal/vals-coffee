@@ -901,7 +901,10 @@ function renderVentaDetalle(id){
   if(!v) return '<div class="banner bad">Esta venta no existe.</div>';
   const cli=v.clienteId? getDoc('clientes', v.clienteId) : null;
   return ''+
-  '<button class="btn btn-ghost btn-sm section-gap" data-action="goto" data-route="ventas">← Volver a ventas</button>'+
+  '<div class="row between section-gap">'+
+    '<button class="btn btn-ghost btn-sm" data-action="goto" data-route="ventas">← Volver a ventas</button>'+
+    '<button class="btn btn-sm btn-danger" data-action="eliminar-venta" data-id="'+v.id+'">Eliminar venta</button>'+
+  '</div>'+
   '<div class="panel">'+
     '<div class="panel-head"><h2>Venta del '+fmtDateTime(v.fecha)+'</h2><div class="faint tnum">'+fmtCOP(v.total)+'</div></div>'+
     '<div class="panel-body">'+
@@ -916,6 +919,33 @@ function renderVentaDetalle(id){
       '</tbody><tfoot><tr><td colspan="3" style="text-align:right; font-weight:600;">Total</td><td class="num tnum" style="font-weight:600;">'+fmtCOP(v.total)+'</td></tr></tfoot></table></div>'+
     '</div>'+
   '</div>';
+}
+
+function formConfirmarEliminarVenta(id){
+  const v=getDoc('ventas', id);
+  if(!v) return '';
+  const cli=v.clienteId? getDoc('clientes', v.clienteId) : null;
+  return ''+
+  '<div class="modal-head"><h3>Eliminar venta</h3><button class="icon-btn btn btn-ghost" data-action="close-modal">✕</button></div>'+
+  '<div class="modal-body">'+
+    '<div class="banner bad">Esta acción no se puede deshacer.</div>'+
+    '<p>Vas a eliminar la venta del <strong>'+fmtDateTime(v.fecha)+'</strong> de <strong>'+esc(cli?cli.nombre:(v.clienteNombre||'Cliente ocasional'))+'</strong> por <strong>'+fmtCOP(v.total)+'</strong>.</p>'+
+    '<p class="faint" style="font-size:12.5px;">El inventario de los productos vendidos se restaurará automáticamente'+(v.codigoId?', y el código de referido usado volverá a quedar disponible.':'.')+'</p>'+
+  '</div>'+
+  '<div class="modal-foot"><button class="btn" data-action="close-modal">Cancelar</button><button class="btn btn-danger" onclick="confirmarEliminarVenta(\''+id+'\')">Sí, eliminar</button></div>';
+}
+async function confirmarEliminarVenta(id){
+  const v=getDoc('ventas', id);
+  if(!v){ closeModal(); return; }
+  const movs=arr('movimientos').filter(m=>m.tipo==='venta' && m.referencia===id);
+  for(const m of movs){ await Store.remove('movimientos', m.id); }
+  if(v.codigoId && getDoc('codigos', v.codigoId)){
+    await Store.update('codigos', v.codigoId, {estado:'ACTIVO', fechaUso:null, clienteReferidoId:null, ventaId:null});
+  }
+  await Store.remove('ventas', id);
+  closeModal();
+  toast('Venta eliminada. El inventario y el código quedaron restaurados.','ok');
+  goto('ventas');
 }
 
 function renderVentaForm(){
@@ -1334,6 +1364,7 @@ document.addEventListener('click', function(e){
       break;
     }
     case 'ver-venta': goto('ventas/'+id); break;
+    case 'eliminar-venta': openModal(formConfirmarEliminarVenta(id)); break;
 
     case 'nuevo-cliente': openModal(formCliente(null)); break;
     case 'editar-cliente': openModal(formCliente(getDoc('clientes', id))); break;
