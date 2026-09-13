@@ -1,0 +1,1412 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Val's Coffee</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#efeae0; --surface:#ffffff; --surface-2:#f7f2e9;
+    --ink:#2a211b; --ink-soft:#6b5d52; --ink-faint:#a39486;
+    --line:#ddd2c2; --line-soft:#e8e0d2;
+    --accent:#7a4b32; --accent-strong:#5e3a26; --accent-ink:#fff6ee; --accent-tint:#f1e2d3;
+    --accent-2:#c1793d; --accent-2-tint:#f6e3cd;
+    --success:#3f7d52; --success-bg:#e3f1e7;
+    --warning:#a8721e; --warning-bg:#faf0da;
+    --danger:#b23b32; --danger-bg:#fbe8e5;
+    --state-active:#3a6e8f; --state-active-bg:#e2eef4;
+    --shadow: 0 1px 2px rgba(42,33,27,.06), 0 6px 20px -8px rgba(42,33,27,.18);
+    --radius: 10px;
+    --font-display: "Fraunces", Georgia, "Iowan Old Style", serif;
+    --font-body: "Work Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#1b1613; --surface:#241d18; --surface-2:#2b221c;
+      --ink:#f3eadf; --ink-soft:#c3b3a4; --ink-faint:#8a7a6c;
+      --line:#3d322a; --line-soft:#332921;
+      --accent:#d79a63; --accent-strong:#e8b076; --accent-ink:#241a10; --accent-tint:#3a2c1e;
+      --accent-2:#e0a463; --accent-2-tint:#3a2c1a;
+      --success:#7fc496; --success-bg:#213a29;
+      --warning:#e0b45a; --warning-bg:#3a2f1a;
+      --danger:#e3897c; --danger-bg:#3a211d;
+      --state-active:#8bbdd6; --state-active-bg:#1f2f38;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -8px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#1b1613; --surface:#241d18; --surface-2:#2b221c;
+    --ink:#f3eadf; --ink-soft:#c3b3a4; --ink-faint:#8a7a6c;
+    --line:#3d322a; --line-soft:#332921;
+    --accent:#d79a63; --accent-strong:#e8b076; --accent-ink:#241a10; --accent-tint:#3a2c1e;
+    --accent-2:#e0a463; --accent-2-tint:#3a2c1a;
+    --success:#7fc496; --success-bg:#213a29;
+    --warning:#e0b45a; --warning-bg:#3a2f1a;
+    --danger:#e3897c; --danger-bg:#3a211d;
+    --state-active:#8bbdd6; --state-active-bg:#1f2f38;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -8px rgba(0,0,0,.5);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:var(--font-body); font-size:14.5px; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{font-family:var(--font-display); font-weight:600; margin:0; text-wrap:balance; color:var(--ink);}
+  .mono{font-family:var(--font-mono);}
+  .tnum{font-variant-numeric:tabular-nums;}
+  a{color:inherit;}
+  button{font:inherit;}
+  input,select,textarea{font:inherit; color:var(--ink);}
+  ::selection{background:var(--accent-tint);}
+
+  /* ---------- layout shell ---------- */
+  #shell{display:flex; min-height:100vh;}
+  #sidebar{
+    width:216px; flex:none; background:var(--surface); border-right:1px solid var(--line);
+    display:flex; flex-direction:column; padding:20px 14px; gap:22px;
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+  }
+  .brand{display:flex; align-items:center; gap:10px; padding:0 6px;}
+  .brand-mark{
+    width:34px; height:34px; border-radius:9px; background:var(--accent); color:var(--accent-ink);
+    display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:700; font-size:17px; flex:none;
+  }
+  .brand-name{font-family:var(--font-display); font-weight:600; font-size:15.5px; line-height:1.2;}
+  .brand-sub{font-size:10.5px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.07em;}
+  nav.nav{display:flex; flex-direction:column; gap:2px;}
+  .nav-item{
+    display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px;
+    color:var(--ink-soft); text-decoration:none; font-size:13.5px; font-weight:500; cursor:pointer; border:none; background:none; width:100%; text-align:left;
+  }
+  .nav-item:hover{background:var(--surface-2); color:var(--ink);}
+  .nav-item.active{background:var(--accent-tint); color:var(--accent-strong);}
+  .nav-icon{width:17px; height:17px; flex:none; display:flex; align-items:center; justify-content:center;}
+  .sidebar-foot{margin-top:auto; padding:10px 6px; font-size:11.5px; color:var(--ink-faint); border-top:1px solid var(--line-soft); padding-top:14px;}
+  .db-pill{display:inline-flex; align-items:center; gap:5px; font-size:11px; padding:3px 8px; border-radius:99px; background:var(--surface-2); color:var(--ink-soft); margin-top:6px;}
+  .db-dot{width:6px; height:6px; border-radius:99px; background:var(--success);}
+  .db-pill.offline .db-dot{background:var(--warning);}
+
+  #topbar{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:14px 26px; border-bottom:1px solid var(--line); background:var(--bg);
+    position:sticky; top:0; z-index:20;
+  }
+  #topbar h1{font-size:19px;}
+  .topbar-actions{display:flex; gap:8px; align-items:center;}
+  #menu-toggle{display:none;}
+
+  main#view{flex:1; min-width:0; padding:22px 26px 60px; max-width:1180px;}
+
+  /* ---------- buttons ---------- */
+  .btn{
+    display:inline-flex; align-items:center; gap:7px; padding:8px 14px; border-radius:8px;
+    border:1px solid var(--line); background:var(--surface); color:var(--ink); cursor:pointer;
+    font-size:13.5px; font-weight:500; white-space:nowrap; transition:background .12s, border-color .12s;
+  }
+  .btn:hover{background:var(--surface-2);}
+  .btn:focus-visible{outline:2px solid var(--accent-2); outline-offset:1px;}
+  .btn-primary{background:var(--accent); border-color:var(--accent); color:var(--accent-ink);}
+  .btn-primary:hover{background:var(--accent-strong); border-color:var(--accent-strong);}
+  .btn-danger{background:var(--surface); border-color:var(--danger); color:var(--danger);}
+  .btn-danger:hover{background:var(--danger-bg);}
+  .btn-ghost{border-color:transparent; background:transparent;}
+  .btn-ghost:hover{background:var(--surface-2);}
+  .btn-sm{padding:5px 10px; font-size:12.5px; border-radius:7px;}
+  .btn[disabled]{opacity:.45; cursor:not-allowed;}
+  .icon-btn{width:32px; height:32px; padding:0; justify-content:center; border-radius:8px;}
+
+  /* ---------- cards / grids ---------- */
+  .kpi-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:22px;}
+  .kpi{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; display:flex; flex-direction:column; gap:6px;}
+  .kpi-label{font-size:11.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em;}
+  .kpi-value{font-family:var(--font-display); font-size:24px; font-weight:600;}
+  .kpi-sub{font-size:11.5px; color:var(--ink-faint);}
+  .kpi.warn .kpi-value{color:var(--warning);}
+  .kpi.bad .kpi-value{color:var(--danger);}
+
+  .panel{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);}
+  .panel-head{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:16px 18px; border-bottom:1px solid var(--line-soft);}
+  .panel-head h2{font-size:16px;}
+  .panel-body{padding:16px 18px;}
+  .section-gap{margin-bottom:22px;}
+  .row{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .row.between{justify-content:space-between;}
+  .muted{color:var(--ink-soft);}
+  .faint{color:var(--ink-faint);}
+
+  /* ---------- tables ---------- */
+  .table-wrap{overflow-x:auto;}
+  table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-faint); font-weight:600; padding:9px 12px; border-bottom:1px solid var(--line);}
+  td{padding:10px 12px; border-bottom:1px solid var(--line-soft); vertical-align:middle;}
+  tbody tr:hover{background:var(--surface-2);}
+  tbody tr:last-child td{border-bottom:none;}
+  td.num, th.num{text-align:right;}
+  .row-link{cursor:pointer;}
+  .empty-row td{color:var(--ink-faint); text-align:center; padding:26px 12px;}
+
+  /* ---------- badges / chips ---------- */
+  .badge{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; padding:3px 9px; border-radius:99px; line-height:1.5;}
+  .badge-dot{width:6px;height:6px;border-radius:99px;background:currentColor;}
+  .badge.ok{background:var(--success-bg); color:var(--success);}
+  .badge.warn{background:var(--warning-bg); color:var(--warning);}
+  .badge.bad{background:var(--danger-bg); color:var(--danger);}
+  .badge.info{background:var(--state-active-bg); color:var(--state-active);}
+  .badge.neutral{background:var(--surface-2); color:var(--ink-soft);}
+
+  /* ---------- forms ---------- */
+  .field{display:flex; flex-direction:column; gap:5px; margin-bottom:14px;}
+  .field label{font-size:12px; font-weight:600; color:var(--ink-soft);}
+  .field .hint{font-size:11.5px; color:var(--ink-faint); font-weight:400;}
+  .field input, .field select, .field textarea{
+    padding:8px 10px; border-radius:7px; border:1px solid var(--line); background:var(--bg); color:var(--ink); width:100%;
+  }
+  :root[data-theme="dark"] .field input, :root[data-theme="dark"] .field select, :root[data-theme="dark"] .field textarea{background:var(--surface-2);}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .field input, :root:not([data-theme="light"]) .field select, :root:not([data-theme="light"]) .field textarea{background:var(--surface-2);}}
+  .field input:focus, .field select:focus, .field textarea:focus{outline:2px solid var(--accent-2); outline-offset:0; border-color:transparent;}
+  .field-row{display:flex; gap:10px;}
+  .field-row .field{flex:1;}
+  fieldset{border:none; padding:0; margin:0;}
+
+  /* ---------- modal ---------- */
+  #modal-root{position:fixed; inset:0; z-index:100; display:none;}
+  #modal-root.open{display:block;}
+  .modal-backdrop{position:absolute; inset:0; background:rgba(20,15,10,.45); backdrop-filter:blur(1px);}
+  .modal-card{
+    position:relative; max-width:560px; width:calc(100% - 32px); margin:5vh auto; max-height:90vh; overflow-y:auto;
+    background:var(--surface); border-radius:14px; box-shadow:0 20px 60px -10px rgba(0,0,0,.4); border:1px solid var(--line);
+  }
+  .modal-card.wide{max-width:760px;}
+  .modal-head{display:flex; align-items:center; justify-content:space-between; padding:18px 20px; border-bottom:1px solid var(--line-soft); position:sticky; top:0; background:var(--surface); border-radius:14px 14px 0 0;}
+  .modal-head h3{font-size:17px;}
+  .modal-body{padding:20px;}
+  .modal-foot{display:flex; justify-content:flex-end; gap:8px; padding:14px 20px; border-top:1px solid var(--line-soft);}
+
+  /* ---------- toast ---------- */
+  #toast-root{position:fixed; bottom:18px; right:18px; z-index:200; display:flex; flex-direction:column; gap:8px; align-items:flex-end;}
+  .toast{background:var(--ink); color:var(--bg); padding:10px 16px; border-radius:8px; font-size:13px; box-shadow:var(--shadow); opacity:0; transform:translateY(6px); transition:opacity .18s, transform .18s;}
+  .toast.show{opacity:1; transform:translateY(0);}
+  .toast.err{background:var(--danger);}
+  .toast.ok{background:var(--success);}
+
+  /* ---------- misc components ---------- */
+  .tag-input-row{display:flex; gap:8px;}
+  .tag-input-row input{flex:1;}
+  .divider{height:1px; background:var(--line-soft); margin:16px 0;}
+  .empty-state{display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; padding:48px 20px; color:var(--ink-soft);}
+  .empty-state .glyph{font-size:26px; color:var(--accent-2);}
+  .stock-bar{height:6px; border-radius:99px; background:var(--surface-2); overflow:hidden; width:100%; max-width:120px;}
+  .stock-bar > span{display:block; height:100%; background:var(--success);}
+  .stock-bar.low > span{background:var(--danger);}
+  .stock-bar.mid > span{background:var(--warning);}
+  .avatar{width:30px; height:30px; border-radius:99px; background:var(--accent-tint); color:var(--accent-strong); display:flex; align-items:center; justify-content:center; font-weight:600; font-size:12.5px; flex:none;}
+  .code-chip{font-family:var(--font-mono); background:var(--surface-2); padding:2px 8px; border-radius:6px; font-size:12.5px; letter-spacing:.02em;}
+  .tabs{display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:18px;}
+  .tab{padding:9px 4px; margin-right:18px; font-size:13.5px; font-weight:600; color:var(--ink-faint); background:none; border:none; border-bottom:2px solid transparent; cursor:pointer; margin-bottom:-1px;}
+  .tab.active{color:var(--accent-strong); border-bottom-color:var(--accent);}
+  .link-btn{background:none; border:none; padding:0; color:var(--accent-strong); font-weight:600; cursor:pointer; font-size:inherit;}
+  .link-btn:hover{text-decoration:underline;}
+  .bars-chart{display:flex; align-items:flex-end; gap:5px; height:110px; padding-top:6px;}
+  .bars-chart .bar-col{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; gap:4px;}
+  .bars-chart .bar{width:100%; max-width:22px; background:var(--accent-2); border-radius:3px 3px 0 0; min-height:2px;}
+  .bars-chart .bar-lbl{font-size:9.5px; color:var(--ink-faint); white-space:nowrap;}
+  .search-input{position:relative;}
+  .banner{display:flex; gap:10px; align-items:flex-start; padding:11px 14px; border-radius:8px; font-size:13px; margin-bottom:16px;}
+  .banner.warn{background:var(--warning-bg); color:var(--warning);}
+  .banner.info{background:var(--state-active-bg); color:var(--state-active);}
+  .banner.bad{background:var(--danger-bg); color:var(--danger);}
+  .grid-2{display:grid; grid-template-columns:1.3fr 1fr; gap:18px; align-items:start;}
+
+  /* card / QR print */
+  .card-preview{background:#fbf6ee; color:#2a211b; border-radius:14px; padding:26px; text-align:center; border:1px solid #e3d5bf; font-family:var(--font-body);}
+  .card-preview h4{font-family:var(--font-display); font-size:19px; margin-bottom:10px; color:#5e3a26;}
+  .card-preview p{font-size:13px; line-height:1.6; margin:0 0 14px;}
+  .card-preview .qr-box{background:#fff; display:inline-block; padding:10px; border-radius:10px; margin:8px 0;}
+  .card-preview .code-big{font-family:var(--font-mono); font-size:15px; letter-spacing:.03em; background:#f1e2d3; padding:6px 14px; border-radius:8px; display:inline-block; color:#5e3a26;}
+  @media print{
+    body *{visibility:hidden;}
+    #print-area, #print-area *{visibility:visible;}
+    #print-area{position:absolute; top:0; left:0; width:100%;}
+  }
+
+  @media (max-width:880px){
+    #sidebar{position:fixed; left:0; top:0; bottom:0; z-index:50; transform:translateX(-100%); transition:transform .18s; box-shadow:0 0 0 100vmax rgba(0,0,0,0);}
+    #sidebar.open{transform:translateX(0); box-shadow:0 0 40px rgba(0,0,0,.25);}
+    #menu-toggle{display:inline-flex;}
+    main#view{padding:16px 14px 60px;}
+    #topbar{padding:12px 14px;}
+    .grid-2{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div id="shell">
+  <aside id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">V</div>
+      <div>
+        <div class="brand-name">Val's Coffee</div>
+        <div class="brand-sub">Gestión</div>
+      </div>
+    </div>
+    <nav class="nav" id="nav-list"></nav>
+    <div class="sidebar-foot">
+      Campaña activa: <strong>Amor y Amistad 2026</strong>
+      <div class="db-pill" id="db-pill"><span class="db-dot"></span><span id="db-pill-text">Conectando…</span></div>
+    </div>
+  </aside>
+
+  <div style="flex:1; min-width:0; display:flex; flex-direction:column;">
+    <header id="topbar">
+      <div class="row">
+        <button class="icon-btn btn" id="menu-toggle" data-action="toggle-sidebar" aria-label="Menú">☰</button>
+        <h1 id="page-title">Panel</h1>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-sm" data-action="open-validar-codigo">✓ Validar código</button>
+        <button class="btn btn-primary btn-sm" data-action="go-nueva-venta">+ Nueva venta</button>
+      </div>
+    </header>
+    <main id="view"><div class="empty-state"><div class="glyph">☕</div><div>Cargando datos de Val's Coffee…</div></div></main>
+  </div>
+</div>
+
+<div id="modal-root"><div class="modal-backdrop" data-action="close-modal"></div><div id="modal-slot"></div></div>
+<div id="toast-root"></div>
+<div id="print-area"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
+<script>
+'use strict';
+
+/* =========================================================================
+   VAL'S COFFEE — sistema de gestión
+   Módulos: Dashboard, Clientes, Productos, Inventario, Ventas,
+            Campañas y Códigos, Reportes.
+   Persistencia: capability "db" del Artifact (compartida, en vivo).
+   Si "db" no está disponible en esta vista, funciona en modo local
+   (los datos viven solo mientras la pestaña esté abierta).
+   ========================================================================= */
+
+/* ---------------------------- constantes ------------------------------ */
+const COLLECTIONS = ['clientes','productos','movimientos','campanas','codigos','ventas'];
+const FUENTES = ['Cliente recurrente','Referido','Instagram','WhatsApp','Evento','Otro'];
+const METODOS_PAGO = ['Efectivo','Transferencia','Tarjeta','Otro'];
+const MOV_TIPOS = {
+  entrada: {label:'Entrada de mercancía', signo:1},
+  regalo: {label:'Regalo de campaña', signo:-1},
+  danado: {label:'Producto dañado / pérdida', signo:-1},
+  ajuste: {label:'Ajuste de inventario', signo:0},
+  venta: {label:'Venta', signo:-1},
+};
+const CODIGO_ESTADOS = ['ACTIVO','UTILIZADO','VENCIDO','CANCELADO','BLOQUEADO'];
+
+const ICONS = {
+  dashboard:'<rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/>',
+  clientes:'<circle cx="8" cy="5.4" r="2.6"/><path d="M3 14c0-3 2.5-4.8 5-4.8s5 1.8 5 4.8"/>',
+  productos:'<path d="M2 5.5 8 2l6 3.5v6L8 15l-6-3.5z"/><path d="M2 5.5 8 9l6-3.5"/><path d="M8 9v6"/>',
+  inventario:'<rect x="2" y="2" width="12" height="3.1" rx=".6"/><rect x="2" y="6.4" width="12" height="3.1" rx=".6"/><rect x="2" y="10.8" width="12" height="3.1" rx=".6"/>',
+  ventas:'<path d="M3 4h10l-1 9.2a1 1 0 0 1-1 .9H5a1 1 0 0 1-1-.9L3 4z"/><path d="M6 4V3.3a2 2 0 0 1 4 0V4"/>',
+  campanas:'<path d="M8 2 3 6H2v4h1l5 4z"/><path d="M11 5.2a3 3 0 0 1 0 5.6"/>',
+  reportes:'<path d="M3 14V9"/><path d="M7.5 14V5"/><path d="M12 14V7.5"/>',
+};
+function icon(name){ return '<svg class="nav-icon" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[name]||'')+'</svg>'; }
+
+const NAV = [
+  {id:'dashboard', label:'Panel'},
+  {id:'clientes', label:'Clientes'},
+  {id:'productos', label:'Productos'},
+  {id:'inventario', label:'Inventario'},
+  {id:'ventas', label:'Ventas'},
+  {id:'campanas', label:'Campañas'},
+  {id:'reportes', label:'Reportes'},
+];
+
+/* ------------------------------ utils ---------------------------------- */
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+const COP = new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0});
+function fmtCOP(n){ return COP.format(Math.round(Number(n)||0)); }
+function fmtDate(iso){ if(!iso) return '—'; const d=new Date(iso+(iso.length<=10?'T00:00:00':'')); if(isNaN(d)) return '—'; return d.toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}); }
+function fmtDateTime(iso){ if(!iso) return '—'; const d=new Date(iso); if(isNaN(d)) return '—'; return d.toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'})+' · '+d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function nowISO(){ return new Date().toISOString(); }
+function daysAgo(iso){ if(!iso) return Infinity; return (Date.now()-new Date(iso).getTime())/86400000; }
+function isSameMonth(iso, ref){ const d=new Date(iso), r=ref||new Date(); return d.getFullYear()===r.getFullYear() && d.getMonth()===r.getMonth(); }
+function isSameDay(iso, ref){ const d=new Date(iso), r=ref||new Date(); return d.toDateString()===r.toDateString(); }
+function slugPrefix(nombre){
+  const stop=['y','de','la','el','los','las','del','en','a','al','the','of','and'];
+  const clean=(nombre||'').normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const words=clean.replace(/[^A-Za-z0-9 ]/g,'').split(' ').filter(Boolean);
+  const yearMatch=clean.match(/\d{4}/);
+  const yearSuffix = yearMatch? yearMatch[0].slice(2) : '';
+  const letters=words.filter(w=>!stop.includes(w.toLowerCase()) && !/^\d+$/.test(w)).map(w=>w[0]).join('').toUpperCase().slice(0,3);
+  return (letters||'CAMP')+yearSuffix;
+}
+function randCode(len){ const chars='23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; let s=''; for(let i=0;i<len;i++) s+=chars[Math.floor(Math.random()*chars.length)]; return s; }
+function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
+function initials(name){ return (name||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
+
+/* ------------------------------- store ---------------------------------
+   Capa que abstrae el guardado: usa Supabase (base de datos en la nube,
+   independiente de cualquier cuenta de Claude) cuando hay credenciales
+   configuradas abajo; si no, guarda en memoria local solo para esta
+   pestaña, como respaldo. */
+const SUPABASE_URL = 'https://sbtwxilqxpakrstxwkma.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_hENSDolqHKGh1dDR_Fv2bg_pqxT846n';
+
+const state = {clientes:{}, productos:{}, movimientos:{}, campanas:{}, codigos:{}, ventas:{}};
+const Store = {
+  sb:null,
+  ready:false,
+  local:{clientes:{}, productos:{}, movimientos:{}, campanas:{}, codigos:{}, ventas:{}},
+  async init(){
+    try{
+      if(window.supabase && SUPABASE_URL && SUPABASE_KEY){
+        const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const {error} = await client.from('clientes').select('id').limit(1);
+        if(error){ console.error('Supabase no respondió como se esperaba, uso modo local:', error.message); }
+        else{ this.sb = client; }
+      }
+    }catch(e){ console.error(e); }
+    this.ready = true;
+    updateDbPill();
+    COLLECTIONS.forEach(name=>this.subscribe(name));
+  },
+  async subscribe(name){
+    if(this.sb){
+      const {data, error} = await this.sb.from(name).select('id,data');
+      if(error){ console.error('Error leyendo', name, error.message); }
+      else{
+        const docs={};
+        data.forEach(row=>{ docs[row.id]=row.data; });
+        state[name]=docs;
+        renderCurrentView();
+      }
+      this.sb.channel(name+'-changes')
+        .on('postgres_changes', {event:'*', schema:'public', table:name}, payload=>{
+          if(payload.eventType==='DELETE'){ delete state[name][payload.old.id]; }
+          else{ state[name][payload.new.id]=payload.new.data; }
+          renderCurrentView();
+        })
+        .subscribe();
+    }else{
+      state[name]=this.local[name];
+    }
+  },
+  async add(name, data){
+    const id=uid();
+    if(this.sb){
+      const {error}=await this.sb.from(name).insert({id, data});
+      if(error){ console.error(error); toast('No se pudo guardar en la base de datos.','err'); }
+    }else{ this.local[name][id]=data; state[name]=this.local[name]; }
+    state[name][id]=data;
+    renderCurrentView();
+    return id;
+  },
+  async set(name, id, data){
+    if(this.sb){
+      const {error}=await this.sb.from(name).upsert({id, data});
+      if(error){ console.error(error); toast('No se pudo guardar en la base de datos.','err'); }
+    }else{ this.local[name][id]=data; }
+    state[name][id]=data;
+    renderCurrentView();
+  },
+  async update(name, id, partial){
+    const merged=Object.assign({}, state[name][id]||{}, partial);
+    return this.set(name, id, merged);
+  },
+  async remove(name, id){
+    if(this.sb){
+      const {error}=await this.sb.from(name).delete().eq('id', id);
+      if(error){ console.error(error); toast('No se pudo eliminar en la base de datos.','err'); }
+    }else{ delete this.local[name][id]; }
+    delete state[name][id];
+    renderCurrentView();
+  }
+};
+function updateDbPill(){
+  const pill=document.getElementById('db-pill');
+  const txt=document.getElementById('db-pill-text');
+  if(!pill||!txt) return;
+  if(Store.sb){ pill.classList.remove('offline'); txt.textContent='Conectado — datos guardados'; }
+  else{ pill.classList.add('offline'); txt.textContent='Sin conexión (modo local, no se guarda)'; }
+}
+
+/* ---------------------- helpers de datos derivados ---------------------- */
+function arr(name){ return Object.keys(state[name]).map(id=>Object.assign({id}, state[name][id])); }
+function getDoc(name, id){ const d=state[name][id]; return d?Object.assign({id}, d):null; }
+
+function stockDe(productoId){
+  return arr('movimientos').filter(m=>m.productoId===productoId).reduce((s,m)=>s+Number(m.cantidad||0),0);
+}
+function movimientosDe(productoId){
+  return arr('movimientos').filter(m=>m.productoId===productoId).sort((a,b)=> new Date(b.fecha)-new Date(a.fecha));
+}
+function ventasDeCliente(clienteId){
+  return arr('ventas').filter(v=>v.clienteId===clienteId).sort((a,b)=> new Date(b.fecha)-new Date(a.fecha));
+}
+function statsCliente(clienteId){
+  const ventas=ventasDeCliente(clienteId);
+  const total=ventas.reduce((s,v)=>s+Number(v.total||0),0);
+  const referidos=arr('codigos').filter(c=>c.clienteReferenteId===clienteId && c.estado==='UTILIZADO').length;
+  return {
+    numCompras:ventas.length,
+    total,
+    primera: ventas.length? ventas[ventas.length-1].fecha : null,
+    ultima: ventas.length? ventas[0].fecha : null,
+    referidos,
+  };
+}
+/* Estado "efectivo" de un código: si venció la fecha de expiración pero
+   sigue marcado ACTIVO, se muestra como VENCIDO sin necesidad de un job. */
+function estadoEfectivo(codigo){
+  if(codigo.estado==='ACTIVO' && codigo.fechaExpiracion && new Date(codigo.fechaExpiracion) < new Date(todayISO())){
+    return 'VENCIDO';
+  }
+  return codigo.estado;
+}
+function badgeEstadoCodigo(estado){
+  const map={ACTIVO:'info', UTILIZADO:'ok', VENCIDO:'warn', CANCELADO:'neutral', BLOQUEADO:'bad', NO_EXISTE:'bad'};
+  return map[estado]||'neutral';
+}
+/* Validación en cascada de un código de referido (secciones 17-20 de la
+   propuesta): existe → pertenece a campaña (si se filtra) → no cancelado
+   → no bloqueado → no utilizado → no vencido → aprobado. */
+function validarCodigo(texto, campanaId){
+  const codigo=arr('codigos').find(c=>c.codigo.toUpperCase()===String(texto||'').trim().toUpperCase());
+  if(!codigo) return {ok:false, estado:'NO_EXISTE', mensaje:'Este código no está registrado en el sistema.'};
+  if(campanaId && codigo.campanaId!==campanaId) return {ok:false, estado:'NO_EXISTE', mensaje:'Este código no pertenece a esta campaña.', codigo};
+  const ef=estadoEfectivo(codigo);
+  if(ef==='CANCELADO') return {ok:false, estado:ef, mensaje:'Este código fue cancelado.', codigo};
+  if(ef==='BLOQUEADO') return {ok:false, estado:ef, mensaje:'Este código está bloqueado.', codigo};
+  if(ef==='UTILIZADO') return {ok:false, estado:ef, mensaje:'Este código ya fue utilizado el '+fmtDate(codigo.fechaUso)+'.', codigo};
+  if(ef==='VENCIDO') return {ok:false, estado:ef, mensaje:'Este código venció el '+fmtDate(codigo.fechaExpiracion)+'.', codigo};
+  return {ok:true, estado:'ACTIVO', mensaje:'Código válido. Beneficio: '+(codigo.beneficio||'—'), codigo};
+}
+function generarCodigoUnico(prefijo){
+  let code, tries=0;
+  do{ code='VALS-'+prefijo+'-'+randCode(4); tries++; }
+  while(arr('codigos').some(c=>c.codigo===code) && tries<50);
+  return code;
+}
+
+/* ------------------------------- toasts --------------------------------- */
+function toast(msg, type){
+  const root=document.getElementById('toast-root');
+  const el=document.createElement('div');
+  el.className='toast'+(type?' '+type:'');
+  el.textContent=msg;
+  root.appendChild(el);
+  requestAnimationFrame(()=>el.classList.add('show'));
+  setTimeout(()=>{ el.classList.remove('show'); setTimeout(()=>el.remove(),250); }, 3000);
+}
+
+/* -------------------------------- modal ---------------------------------- */
+function openModal(html, opts){
+  const root=document.getElementById('modal-root');
+  const slot=document.getElementById('modal-slot');
+  slot.innerHTML='<div class="modal-card'+((opts&&opts.wide)?' wide':'')+'">'+html+'</div>';
+  root.classList.add('open');
+  const first=slot.querySelector('input,select,textarea');
+  if(first) setTimeout(()=>first.focus(), 30);
+}
+function closeModal(){
+  document.getElementById('modal-root').classList.remove('open');
+  document.getElementById('modal-slot').innerHTML='';
+}
+
+/* ------------------------------- router ---------------------------------- */
+function currentRoute(){
+  const hash=(location.hash||'#/dashboard').replace(/^#\/?/,'');
+  const parts=hash.split('/').filter(Boolean);
+  return {section:parts[0]||'dashboard', id:parts[1], sub:parts[2]};
+}
+window.addEventListener('hashchange', renderCurrentView);
+
+function renderNav(){
+  const route=currentRoute();
+  const nav=document.getElementById('nav-list');
+  nav.innerHTML=NAV.map(item=>
+    '<button class="nav-item'+(route.section===item.id?' active':'')+'" data-action="goto" data-route="'+item.id+'">'+
+      icon(item.id)+'<span>'+item.label+'</span>'+
+    '</button>'
+  ).join('');
+  document.getElementById('page-title').textContent = NAV.find(n=>n.id===route.section)?.label || 'Panel';
+}
+
+const VIEW_RENDERERS = {}; // se llenan más abajo: VIEW_RENDERERS.dashboard = fn, etc.
+
+function renderCurrentView(){
+  if(!Store.ready) return;
+  renderNav();
+  const route=currentRoute();
+  const fn=VIEW_RENDERERS[route.section] || VIEW_RENDERERS.dashboard;
+  const view=document.getElementById('view');
+  try{
+    view.innerHTML = fn(route);
+  }catch(e){
+    console.error(e);
+    view.innerHTML = '<div class="banner bad">Ocurrió un error mostrando esta sección. Revisa la consola para más detalle.</div>';
+  }
+  document.getElementById('sidebar').classList.remove('open');
+}
+function goto(route){ location.hash='#/'+route; }
+
+/* ================================ DASHBOARD ============================== */
+VIEW_RENDERERS.dashboard = function(){
+  const ventas=arr('ventas');
+  const productos=arr('productos');
+  const clientes=arr('clientes');
+  const codigos=arr('codigos');
+
+  const ventasHoy=ventas.filter(v=>isSameDay(v.fecha)).reduce((s,v)=>s+Number(v.total||0),0);
+  const ventasMes=ventas.filter(v=>isSameMonth(v.fecha)).reduce((s,v)=>s+Number(v.total||0),0);
+  const unidadesMes=ventas.filter(v=>isSameMonth(v.fecha)).reduce((s,v)=>s+(v.items||[]).reduce((a,i)=>a+Number(i.cantidad||0),0),0);
+  const clientesActivos=clientes.filter(c=>{ const st=statsCliente(c.id); return st.ultima && daysAgo(st.ultima)<=90; }).length;
+  const codigosActivos=codigos.filter(c=>estadoEfectivo(c)==='ACTIVO').length;
+  const codigosUtilizados=codigos.filter(c=>c.estado==='UTILIZADO').length;
+  const referidosMes=codigos.filter(c=>c.estado==='UTILIZADO' && c.fechaUso && isSameMonth(c.fechaUso)).length;
+  const stockBajo=productos.filter(p=>stockDe(p.id)<=Number(p.stockMinimo||0)).length;
+
+  const kpis=[
+    {label:'Ventas de hoy', value:fmtCOP(ventasHoy)},
+    {label:'Ventas del mes', value:fmtCOP(ventasMes)},
+    {label:'Unidades vendidas (mes)', value:unidadesMes},
+    {label:'Clientes activos', value:clientesActivos, sub:'con compra en 90 días'},
+    {label:'Códigos disponibles', value:codigosActivos},
+    {label:'Códigos utilizados', value:codigosUtilizados},
+    {label:'Referidos nuevos (mes)', value:referidosMes},
+    {label:'Stock bajo', value:stockBajo, cls: stockBajo>0?'warn':''},
+  ];
+
+  const recientes=ventas.slice().sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,6);
+
+  return ''+
+  '<div class="kpi-grid">'+ kpis.map(k=>
+    '<div class="kpi'+(k.cls?' '+k.cls:'')+'"><div class="kpi-label">'+k.label+'</div><div class="kpi-value tnum">'+k.value+'</div>'+(k.sub?'<div class="kpi-sub">'+k.sub+'</div>':'')+'</div>'
+  ).join('') +'</div>'+
+
+  '<div class="grid-2">'+
+    '<div class="panel section-gap">'+
+      '<div class="panel-head"><h2>Ventas recientes</h2><button class="btn btn-sm" data-action="goto" data-route="ventas">Ver todas</button></div>'+
+      '<div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Fecha</th><th class="num">Total</th><th>Código</th></tr></thead><tbody>'+
+      (recientes.length? recientes.map(v=>{
+        const cli=v.clienteId?getDoc('clientes', v.clienteId):null;
+        return '<tr class="row-link" data-action="ver-venta" data-id="'+v.id+'">'+
+          '<td>'+esc(cli?cli.nombre:(v.clienteNombre||'Cliente ocasional'))+'</td>'+
+          '<td class="faint">'+fmtDate(v.fecha)+'</td>'+
+          '<td class="num tnum">'+fmtCOP(v.total)+'</td>'+
+          '<td>'+(v.codigoTexto?'<span class="code-chip">'+esc(v.codigoTexto)+'</span>':'<span class="faint">—</span>')+'</td>'+
+        '</tr>';
+      }).join('') : '<tr class="empty-row"><td colspan="4">Aún no hay ventas registradas.</td></tr>')+
+      '</tbody></table></div>'+
+    '</div>'+
+
+    '<div class="panel section-gap">'+
+      '<div class="panel-head"><h2>Campaña activa</h2><button class="btn btn-sm" data-action="goto" data-route="campanas">Ver campañas</button></div>'+
+      '<div class="panel-body">'+renderCampanaResumenCard()+'</div>'+
+    '</div>'+
+  '</div>'+
+
+  (stockBajo>0 ? '<div class="banner warn">⚠ '+stockBajo+' producto(s) están en o por debajo del stock mínimo. <button class="link-btn" data-action="goto" data-route="inventario" style="margin-left:6px;">Ver inventario</button></div>' : '');
+};
+
+function renderCampanaResumenCard(){
+  const campanas=arr('campanas');
+  if(!campanas.length){
+    return '<div class="empty-state"><div class="glyph">✺</div><div>Aún no has creado una campaña.</div><button class="btn btn-primary btn-sm" data-action="nueva-campana">+ Nueva campaña</button></div>';
+  }
+  const activa = campanas.find(c=>c.estado==='activa') || campanas[campanas.length-1];
+  const codigos=arr('codigos').filter(c=>c.campanaId===activa.id);
+  const utilizados=codigos.filter(c=>c.estado==='UTILIZADO').length;
+  const conv = codigos.length? Math.round(utilizados/codigos.length*100) : 0;
+  return '<div class="row between" style="margin-bottom:10px;"><h3 style="font-size:16px;">'+esc(activa.nombre)+'</h3>'+badge(activa.estado==='activa'?'ok':'neutral', activa.estado)+'</div>'+
+    '<div class="row" style="gap:22px; margin-bottom:6px;">'+
+      statMini(codigos.length,'códigos generados')+
+      statMini(utilizados,'utilizados')+
+      statMini(conv+'%','conversión')+
+    '</div>'+
+    '<div class="faint" style="font-size:12px; margin-top:8px;">'+fmtDate(activa.fechaInicio)+' — '+fmtDate(activa.fechaFin)+'</div>'+
+    '<button class="btn btn-sm" style="margin-top:12px;" data-action="ver-campana" data-id="'+activa.id+'">Ver detalle</button>';
+}
+function statMini(value,label){ return '<div><div class="tnum" style="font-family:var(--font-display); font-size:19px; font-weight:600;">'+value+'</div><div class="faint" style="font-size:11px;">'+label+'</div></div>'; }
+function badge(kind,text){ return '<span class="badge '+kind+'"><span class="badge-dot"></span>'+esc(text)+'</span>'; }
+
+/* ================================ CLIENTES ============================== */
+VIEW_RENDERERS.clientes = function(route){
+  if(route.id) return renderClienteDetalle(route.id);
+  const q=(window.__clientesQuery||'').toLowerCase();
+  let clientes=arr('clientes');
+  if(q) clientes = clientes.filter(c=> (c.nombre||'').toLowerCase().includes(q) || (c.telefono||'').includes(q));
+  clientes = clientes.map(c=>Object.assign({}, c, {_stats:statsCliente(c.id)})).sort((a,b)=> new Date(b._stats.ultima||0)-new Date(a._stats.ultima||0));
+
+  return ''+
+  '<div class="row between section-gap">'+
+    '<div class="search-input"><input type="text" placeholder="Buscar por nombre o teléfono…" value="'+esc(window.__clientesQuery||'')+'" oninput="window.__clientesQuery=this.value; renderCurrentView();" style="padding:8px 12px; border-radius:8px; border:1px solid var(--line); background:var(--surface); min-width:240px;"></div>'+
+    '<button class="btn btn-primary" data-action="nuevo-cliente">+ Nuevo cliente</button>'+
+  '</div>'+
+  '<div class="panel">'+
+  '<div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Teléfono</th><th class="num">Compras</th><th class="num">Total comprado</th><th>Última compra</th><th class="num">Referidos</th><th>Estado</th></tr></thead><tbody>'+
+  (clientes.length? clientes.map(c=>
+    '<tr class="row-link" data-action="ver-cliente" data-id="'+c.id+'">'+
+      '<td><div class="row" style="gap:9px;"><div class="avatar">'+initials(c.nombre)+'</div>'+esc(c.nombre)+'</div></td>'+
+      '<td class="faint">'+esc(c.telefono||'—')+'</td>'+
+      '<td class="num tnum">'+c._stats.numCompras+'</td>'+
+      '<td class="num tnum">'+fmtCOP(c._stats.total)+'</td>'+
+      '<td class="faint">'+fmtDate(c._stats.ultima)+'</td>'+
+      '<td class="num tnum">'+c._stats.referidos+'</td>'+
+      '<td>'+badge(c.estado==='Inactivo'?'neutral':'ok', c.estado||'Activo')+'</td>'+
+    '</tr>'
+  ).join('') : '<tr class="empty-row"><td colspan="7">'+(q?'No hay clientes que coincidan con la búsqueda.':'Aún no tienes clientes registrados. Agrega el primero.')+'</td></tr>')+
+  '</tbody></table></div></div>';
+};
+
+function renderClienteDetalle(id){
+  const c=getDoc('clientes', id);
+  if(!c) return '<div class="banner bad">Este cliente no existe o fue eliminado.</div>';
+  const st=statsCliente(id);
+  const ventas=ventasDeCliente(id);
+  const codigosGenerados=arr('codigos').filter(k=>k.clienteReferenteId===id);
+
+  return ''+
+  '<button class="btn btn-ghost btn-sm section-gap" data-action="goto" data-route="clientes">← Volver a clientes</button>'+
+  '<div class="row between section-gap" style="align-items:flex-start;">'+
+    '<div class="row" style="gap:14px;"><div class="avatar" style="width:46px;height:46px;font-size:16px;">'+initials(c.nombre)+'</div>'+
+      '<div><h2 style="font-size:20px;">'+esc(c.nombre)+'</h2><div class="faint">'+esc(c.telefono||'Sin teléfono')+' · Cliente desde '+fmtDate(c.fechaRegistro)+'</div></div></div>'+
+    '<div class="row">'+
+      '<button class="btn btn-sm" data-action="editar-cliente" data-id="'+c.id+'">Editar</button>'+
+      '<button class="btn btn-primary btn-sm" data-action="go-nueva-venta" data-cliente="'+c.id+'">+ Nueva venta</button>'+
+    '</div>'+
+  '</div>'+
+
+  '<div class="kpi-grid">'+
+    '<div class="kpi"><div class="kpi-label">Compras</div><div class="kpi-value tnum">'+st.numCompras+'</div></div>'+
+    '<div class="kpi"><div class="kpi-label">Total comprado</div><div class="kpi-value tnum">'+fmtCOP(st.total)+'</div></div>'+
+    '<div class="kpi"><div class="kpi-label">Primera compra</div><div class="kpi-value" style="font-size:15px;">'+fmtDate(st.primera)+'</div></div>'+
+    '<div class="kpi"><div class="kpi-label">Referidos exitosos</div><div class="kpi-value tnum">'+st.referidos+'</div></div>'+
+  '</div>'+
+
+  (c.notas? '<div class="panel section-gap"><div class="panel-body"><div class="faint" style="font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px;">Notas</div>'+esc(c.notas)+'</div></div>' : '')+
+
+  '<div class="panel section-gap">'+
+    '<div class="panel-head"><h2>Historial de compras</h2></div>'+
+    '<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Productos</th><th class="num">Total</th><th>Método</th><th>Código usado</th></tr></thead><tbody>'+
+    (ventas.length? ventas.map(v=>
+      '<tr class="row-link" data-action="ver-venta" data-id="'+v.id+'"><td class="faint">'+fmtDate(v.fecha)+'</td>'+
+      '<td>'+esc((v.items||[]).map(i=>i.cantidad+'× '+i.nombre).join(', '))+'</td>'+
+      '<td class="num tnum">'+fmtCOP(v.total)+'</td><td class="faint">'+esc(v.metodoPago||'—')+'</td>'+
+      '<td>'+(v.codigoTexto?'<span class="code-chip">'+esc(v.codigoTexto)+'</span>':'<span class="faint">—</span>')+'</td></tr>'
+    ).join('') : '<tr class="empty-row"><td colspan="5">Sin compras registradas todavía.</td></tr>')+
+    '</tbody></table></div>'+
+  '</div>'+
+
+  '<div class="panel">'+
+    '<div class="panel-head"><h2>Códigos que ha referido</h2></div>'+
+    '<div class="table-wrap"><table><thead><tr><th>Código</th><th>Campaña</th><th>Estado</th><th>Cliente referido</th><th>Fecha de uso</th></tr></thead><tbody>'+
+    (codigosGenerados.length? codigosGenerados.map(k=>{
+      const camp=getDoc('campanas', k.campanaId);
+      const referido=k.clienteReferidoId? getDoc('clientes', k.clienteReferidoId) : null;
+      const ef=estadoEfectivo(k);
+      return '<tr><td><span class="code-chip">'+esc(k.codigo)+'</span></td><td class="faint">'+esc(camp?camp.nombre:'—')+'</td>'+
+        '<td>'+badge(badgeEstadoCodigo(ef), ef)+'</td><td>'+esc(referido?referido.nombre:'—')+'</td><td class="faint">'+fmtDate(k.fechaUso)+'</td></tr>';
+    }).join('') : '<tr class="empty-row"><td colspan="5">Este cliente aún no ha generado referidos.</td></tr>')+
+    '</tbody></table></div>'+
+  '</div>';
+}
+
+function formCliente(existing){
+  const c=existing||{};
+  return ''+
+  '<div class="modal-head"><h3>'+(existing?'Editar cliente':'Nuevo cliente')+'</h3><button class="icon-btn btn btn-ghost" data-action="close-modal">✕</button></div>'+
+  '<form data-form="cliente" data-id="'+(existing?existing.id:'')+'">'+
+  '<div class="modal-body">'+
+    '<div class="field"><label for="cli-nombre">Nombre completo</label><input id="cli-nombre" name="nombre" required value="'+esc(c.nombre||'')+'" placeholder="María Gómez"></div>'+
+    '<div class="field-row">'+
+      '<div class="field"><label for="cli-telefono">Teléfono</label><input id="cli-telefono" name="telefono" value="'+esc(c.telefono||'')+'" placeholder="300 000 0000"></div>'+
+      '<div class="field"><label for="cli-fecha">Cliente desde</label><input id="cli-fecha" name="fechaRegistro" type="date" value="'+esc(c.fechaRegistro||todayISO())+'"></div>'+
+    '</div>'+
+    '<div class="field"><label for="cli-estado">Estado</label><select id="cli-estado" name="estado"><option'+(c.estado!=='Inactivo'?' selected':'')+'>Activo</option><option'+(c.estado==='Inactivo'?' selected':'')+'>Inactivo</option></select></div>'+
+    '<div class="field"><label for="cli-notas">Notas <span class="hint">(opcional)</span></label><textarea id="cli-notas" name="notas" rows="2" placeholder="Preferencias, historia con la marca…">'+esc(c.notas||'')+'</textarea></div>'+
+  '</div>'+
+  '<div class="modal-foot"><button type="button" class="btn" data-action="close-modal">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div>'+
+  '</form>';
+}
+
+/* =============================== PRODUCTOS =============================== */
+VIEW_RENDERERS.productos = function(){
+  const productos=arr('productos').sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+  return ''+
+  '<div class="row between section-gap"><div class="faint">Catálogo de productos y precios de Val\'s Coffee.</div>'+
+    '<button class="btn btn-primary" data-action="nuevo-producto">+ Nuevo producto</button></div>'+
+  '<div class="panel">'+
+  '<div class="table-wrap"><table><thead><tr><th>Código</th><th>Producto</th><th>Presentación</th><th class="num">Precio</th><th class="num">Costo</th><th class="num">Margen</th><th class="num">Stock</th><th>Estado</th><th></th></tr></thead><tbody>'+
+  (productos.length? productos.map(p=>{
+    const stock=stockDe(p.id);
+    const margen = p.precioVenta? Math.round((1-(Number(p.costo||0)/Number(p.precioVenta)))*100) : null;
+    const bajo = stock<=Number(p.stockMinimo||0);
+    return '<tr>'+
+      '<td class="mono faint">'+esc(p.codigo||'—')+'</td>'+
+      '<td>'+esc(p.nombre)+'</td>'+
+      '<td class="faint">'+esc(p.presentacion||'—')+'</td>'+
+      '<td class="num tnum">'+fmtCOP(p.precioVenta)+'</td>'+
+      '<td class="num tnum faint">'+(p.costo?fmtCOP(p.costo):'—')+'</td>'+
+      '<td class="num tnum">'+(margen!=null? margen+'%':'—')+'</td>'+
+      '<td class="num tnum" style="color:'+(bajo?'var(--danger)':'inherit')+'">'+stock+'</td>'+
+      '<td>'+badge(p.estado==='Descontinuado'?'neutral':(bajo?'warn':'ok'), bajo&&p.estado!=='Descontinuado'?'Stock bajo':(p.estado||'Activo'))+'</td>'+
+      '<td class="row" style="gap:6px;"><button class="btn btn-sm" data-action="editar-producto" data-id="'+p.id+'">Editar</button></td>'+
+    '</tr>';
+  }).join('') : '<tr class="empty-row"><td colspan="9">Aún no tienes productos. Agrega el café molido y sus presentaciones para empezar.</td></tr>')+
+  '</tbody></table></div></div>';
+};
+
+function formProducto(existing){
+  const p=existing||{};
+  return ''+
+  '<div class="modal-head"><h3>'+(existing?'Editar producto':'Nuevo producto')+'</h3><button class="icon-btn btn btn-ghost" data-action="close-modal">✕</button></div>'+
+  '<form data-form="producto" data-id="'+(existing?existing.id:'')+'">'+
+  '<div class="modal-body">'+
+    '<div class="field"><label for="p-nombre">Nombre</label><input id="p-nombre" name="nombre" required value="'+esc(p.nombre||'')+'" placeholder="Café de origen molido"></div>'+
+    '<div class="field-row">'+
+      '<div class="field"><label for="p-presentacion">Presentación</label><input id="p-presentacion" name="presentacion" value="'+esc(p.presentacion||'')+'" placeholder="250 g"></div>'+
+      '<div class="field"><label for="p-codigo">Código interno</label><input id="p-codigo" name="codigo" value="'+esc(p.codigo||'')+'" placeholder="CAF-250"></div>'+
+    '</div>'+
+    '<div class="field-row">'+
+      '<div class="field"><label for="p-precio">Precio de venta (COP)</label><input id="p-precio" name="precioVenta" type="number" min="0" step="500" required value="'+esc(p.precioVenta||'')+'"></div>'+
+      '<div class="field"><label for="p-costo">Costo real (COP) <span class="hint">para calcular margen</span></label><input id="p-costo" name="costo" type="number" min="0" step="500" value="'+esc(p.costo||'')+'"></div>'+
+    '</div>'+
+    '<div class="field-row">'+
+      '<div class="field"><label for="p-stockmin">Stock mínimo</label><input id="p-stockmin" name="stockMinimo" type="number" min="0" value="'+esc(p.stockMinimo!=null?p.stockMinimo:5)+'"></div>'+
+      '<div class="field"><label for="p-proveedor">Proveedor</label><input id="p-proveedor" name="proveedor" value="'+esc(p.proveedor||'')+'"></div>'+
+    '</div>'+
+    '<div class="field"><label for="p-estado">Estado</label><select id="p-estado" name="estado"><option'+(p.estado!=='Descontinuado'?' selected':'')+'>Activo</option><option'+(p.estado==='Descontinuado'?' selected':'')+'>Descontinuado</option></select></div>'+
+    (existing? '<div class="hint">El stock se calcula a partir de los movimientos de inventario, no se edita aquí. Ve a Inventario para registrar entradas, regalos o pérdidas.</div>' : '<div class="hint">Después de crear el producto, registra una entrada en Inventario para cargar su stock inicial.</div>')+
+  '</div>'+
+  '<div class="modal-foot"><button type="button" class="btn" data-action="close-modal">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div>'+
+  '</form>';
+}
+
+/* =============================== INVENTARIO =============================== */
+VIEW_RENDERERS.inventario = function(){
+  const productos=arr('productos');
+  const movimientos=arr('movimientos').sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,40);
+
+  return ''+
+  '<div class="row between section-gap"><div class="faint">Stock actual y movimientos de entrada, salida y ajuste.</div>'+
+    '<button class="btn btn-primary" data-action="nuevo-movimiento">+ Registrar movimiento</button></div>'+
+
+  '<div class="panel section-gap">'+
+    '<div class="panel-head"><h2>Stock actual</h2></div>'+
+    '<div class="table-wrap"><table><thead><tr><th>Producto</th><th class="num">Stock</th><th>Nivel</th><th class="num">Mínimo</th></tr></thead><tbody>'+
+    (productos.length? productos.map(p=>{
+      const stock=stockDe(p.id);
+      const min=Number(p.stockMinimo||0);
+      const pct = min>0? Math.min(100, Math.round(stock/(min*2)*100)) : (stock>0?100:0);
+      const cls = stock<=min? 'low' : (stock<=min*1.5? 'mid':'');
+      return '<tr><td>'+esc(p.nombre)+' <span class="faint">'+esc(p.presentacion||'')+'</span></td>'+
+        '<td class="num tnum" style="color:'+(stock<=min?'var(--danger)':'inherit')+'">'+stock+'</td>'+
+        '<td><div class="stock-bar '+cls+'"><span style="width:'+pct+'%"></span></div></td>'+
+        '<td class="num tnum faint">'+min+'</td></tr>';
+    }).join('') : '<tr class="empty-row"><td colspan="4">Registra productos primero en la sección Productos.</td></tr>')+
+    '</tbody></table></div>'+
+  '</div>'+
+
+  '<div class="panel">'+
+    '<div class="panel-head"><h2>Movimientos recientes</h2></div>'+
+    '<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th class="num">Cantidad</th><th>Motivo</th></tr></thead><tbody>'+
+    (movimientos.length? movimientos.map(m=>{
+      const p=getDoc('productos', m.productoId);
+      const tipo=MOV_TIPOS[m.tipo]||{label:m.tipo};
+      const positivo=Number(m.cantidad)>0;
+      return '<tr><td class="faint">'+fmtDateTime(m.fecha)+'</td><td>'+esc(p?p.nombre:'—')+'</td>'+
+        '<td>'+badge(m.tipo==='entrada'?'ok':(m.tipo==='ajuste'?'info':'neutral'), tipo.label)+'</td>'+
+        '<td class="num tnum" style="color:'+(positivo?'var(--success)':'var(--danger)')+'">'+(positivo?'+':'')+m.cantidad+'</td>'+
+        '<td class="faint">'+esc(m.motivo||'—')+'</td></tr>';
+    }).join('') : '<tr class="empty-row"><td colspan="5">Sin movimientos todavía.</td></tr>')+
+    '</tbody></table></div>'+
+  '</div>';
+};
+
+function formMovimiento(){
+  const productos=arr('productos');
+  const campanas=arr('campanas');
+  if(!productos.length){
+    return '<div class="modal-head"><h3>Registrar movimiento</h3><button class="icon-btn btn btn-ghost" data-action="close-modal">✕</button></div>'+
+      '<div class="modal-body"><div class="banner warn">Primero crea al menos un producto en la sección Productos.</div></div>'+
+      '<div class="modal-foot"><button class="btn" data-action="close-modal">Cerrar</button></div>';
+  }
+  return ''+
+  '<div class="modal-head"><h3>Registrar movimiento de inventario</h3><button class="icon-btn btn btn-ghost" data-action="close-modal">✕</button></div>'+
+  '<form data-form="movimiento">'+
+  '<div class="modal-body">'+
+    '<div class="field"><label for="m-producto">Producto</label><select id="m-producto" name="productoId" required>'+
+      productos.map(p=>'<option value="'+p.id+'">'+esc(p.nombre)+' '+esc(p.presentacion||'')+' (stock: '+stockDe(p.id)+')</option>').join('')+
+    '</select></div>'+
+    '<div class="field-row">'+
+      '<div class="field"><label for="m-tipo">Tipo de movimiento</label><select id="m-tipo" name="tipo" onchange="document.getElementById(\'m-campana-wrap\').style.display=this.value===\'regalo\'?\'flex\':\'none\'; document.getElementById(\'m-signo-hint\').textContent = this.value===\'entrada\'?\'Se sumará al stock.\':(this.value===\'ajuste\'?\'Usa un número negativo para restar.\':\'Se restará del stock.\');">'+
+        '<option value="entrada">Entrada de mercancía</option>'+
+        '<option value="regalo">Regalo de campaña</option>'+
+        '<option value="danado">Producto dañado / pérdida</option>'+
+        '<option value="ajuste">Ajuste manual</option>'+
+      '</select></div>'+
+      '<div class="field"><label for="m-cantidad">Cantidad</label><input id="m-cantidad" name="cantidad" type="number" required step="1" value="1"><span class="hint" id="m-signo-hint">Se sumará al stock.</span></div>'+
+    '</div>'+
+    '<div class="field-row" id="m-campana-wrap" style="display:none;">'+
+      '<div class="field"><label for="m-campana">Campaña relacionada</label><select id="m-campana" name="campanaId"><option value="">—</option>'+campanas.map(c=>'<option value="'+c.id+'">'+esc(c.nombre)+'</option>').join('')+'</select></div>'+
+    '</div>'+
+    '<div class="field"><label for="m-fecha">Fecha</label><input id="m-fecha" name="fecha" type="date" value="'+todayISO()+'"></div>'+
+    '<div class="field"><label for="m-motivo">Motivo / nota</label><input id="m-motivo" name="motivo" placeholder="Ej: llegada de 50 bolsas, tarjeta Amor y Amistad…"></div>'+
+  '</div>'+
+  '<div class="modal-foot"><button type="button" class="btn" data-action="close-modal">Cancelar</button><button type="submit" class="btn btn-primary">Registrar</button></div>'+
+  '</form>';
+}
+
+/* ================================= VENTAS ================================= */
+VIEW_RENDERERS.ventas = function(route){
+  if(route.id==='nueva') return renderVentaForm();
+  if(route.id) return renderVentaDetalle(route.id);
+  return renderVentasList();
+};
+
+function renderVentasList(){
+  const ventas=arr('ventas').sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  return ''+
+  '<div class="row between section-gap"><div class="faint">Historial completo de ventas.</div>'+
+    '<button class="btn btn-primary" data-action="go-nueva-venta">+ Nueva venta</button></div>'+
+  '<div class="panel"><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Cliente</th><th>Productos</th><th class="num">Total</th><th>Método</th><th>Fuente</th><th>Código</th></tr></thead><tbody>'+
+  (ventas.length? ventas.map(v=>{
+    const cli=v.clienteId? getDoc('clientes', v.clienteId) : null;
+    return '<tr class="row-link" data-action="ver-venta" data-id="'+v.id+'">'+
+      '<td class="faint">'+fmtDateTime(v.fecha)+'</td>'+
+      '<td>'+esc(cli?cli.nombre:(v.clienteNombre||'Cliente ocasional'))+'</td>'+
+      '<td class="faint">'+esc((v.items||[]).map(i=>i.cantidad+'× '+i.nombre).join(', '))+'</td>'+
+      '<td class="num tnum">'+fmtCOP(v.total)+'</td>'+
+      '<td class="faint">'+esc(v.metodoPago||'—')+'</td>'+
+      '<td class="faint">'+esc(v.fuente||'—')+'</td>'+
+      '<td>'+(v.codigoTexto?'<span class="code-chip">'+esc(v.codigoTexto)+'</span>':'—')+'</td>'+
+    '</tr>';
+  }).join('') : '<tr class="empty-row"><td colspan="7">Aún no se han registrado ventas.</td></tr>')+
+  '</tbody></table></div></div>';
+}
+
+function renderVentaDetalle(id){
+  const v=getDoc('ventas', id);
+  if(!v) return '<div class="banner bad">Esta venta no existe.</div>';
+  const cli=v.clienteId? getDoc('clientes', v.clienteId) : null;
+  return ''+
+  '<button class="btn btn-ghost btn-sm section-gap" data-action="goto" data-route="ventas">← Volver a ventas</button>'+
+  '<div class="panel">'+
+    '<div class="panel-head"><h2>Venta del '+fmtDateTime(v.fecha)+'</h2><div class="faint tnum">'+fmtCOP(v.total)+'</div></div>'+
+    '<div class="panel-body">'+
+      '<div class="row" style="gap:28px; margin-bottom:16px; flex-wrap:wrap;">'+
+        '<div><div class="faint" style="font-size:11.5px;">CLIENTE</div>'+(cli?'<a class="link-btn" data-action="ver-cliente" data-id="'+cli.id+'" style="cursor:pointer;">'+esc(cli.nombre)+'</a>':esc(v.clienteNombre||'Cliente ocasional'))+'</div>'+
+        '<div><div class="faint" style="font-size:11.5px;">MÉTODO DE PAGO</div>'+esc(v.metodoPago||'—')+'</div>'+
+        '<div><div class="faint" style="font-size:11.5px;">FUENTE</div>'+esc(v.fuente||'—')+'</div>'+
+        (v.codigoTexto?'<div><div class="faint" style="font-size:11.5px;">CÓDIGO APLICADO</div><span class="code-chip">'+esc(v.codigoTexto)+'</span></div>':'')+
+      '</div>'+
+      '<div class="table-wrap"><table><thead><tr><th>Producto</th><th class="num">Cantidad</th><th class="num">Precio unit.</th><th class="num">Subtotal</th></tr></thead><tbody>'+
+      (v.items||[]).map(i=>'<tr><td>'+esc(i.nombre)+' <span class="faint">'+esc(i.presentacion||'')+'</span></td><td class="num tnum">'+i.cantidad+'</td><td class="num tnum">'+fmtCOP(i.precioUnitario)+'</td><td class="num tnum">'+fmtCOP(i.subtotal)+'</td></tr>').join('')+
+      '</tbody><tfoot><tr><td colspan="3" style="text-align:right; font-weight:600;">Total</td><td class="num tnum" style="font-weight:600;">'+fmtCOP(v.total)+'</td></tr></tfoot></table></div>'+
+    '</div>'+
+  '</div>';
+}
+
+function renderVentaForm(){
+  if(!window.__ventaDraft){
+    window.__ventaDraft={clienteId:'', clienteModoNuevo:false, clienteNuevoNombre:'', clienteNuevoTelefono:'', fuente:'Cliente recurrente', metodoPago:'Efectivo', items:[{productoId:'',cantidad:1,precioUnitario:0}], codigoTexto:'', codigoResultado:null};
+  }
+  const d=window.__ventaDraft;
+  const clientes=arr('clientes').sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+  const productos=arr('productos');
+  const total=(d.items||[]).reduce((s,i)=>s+(Number(i.cantidad)||0)*(Number(i.precioUnitario)||0),0);
+
+  const itemsHtml = d.items.map((it,idx)=>{
+    const p=getDoc('productos', it.productoId);
+    const stock=p?stockDe(p.id):null;
+    const excede = p && Number(it.cantidad)>stock;
+    return '<div class="panel-body" style="border-bottom:1px solid var(--line-soft); padding:12px 0; display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">'+
+      '<div class="field" style="flex:2; min-width:180px; margin-bottom:0;"><label>Producto</label><select onchange="updateVentaItem('+idx+',\'productoId\',this.value)">'+
+        '<option value="">Seleccionar…</option>'+
+        productos.map(pp=>'<option value="'+pp.id+'"'+(it.productoId===pp.id?' selected':'')+'>'+esc(pp.nombre)+' '+esc(pp.presentacion||'')+'</option>').join('')+
+      '</select>'+(p?'<span class="hint">Disponible: '+stock+'</span>':'')+'</div>'+
+      '<div class="field" style="width:90px; margin-bottom:0;"><label>Cant.</label><input type="number" min="1" step="1" value="'+it.cantidad+'" onchange="updateVentaItem('+idx+',\'cantidad\',this.value)"></div>'+
+      '<div class="field" style="width:140px; margin-bottom:0;"><label>Precio unit.</label><input type="number" min="0" step="500" value="'+it.precioUnitario+'" onchange="updateVentaItem('+idx+',\'precioUnitario\',this.value)"></div>'+
+      '<div class="field" style="width:120px; margin-bottom:0;"><label>Subtotal</label><div class="tnum" style="padding:8px 0; font-weight:600;">'+fmtCOP((Number(it.cantidad)||0)*(Number(it.precioUnitario)||0))+'</div></div>'+
+      '<button type="button" class="icon-btn btn btn-ghost" onclick="removeVentaItem('+idx+')" aria-label="Quitar" style="margin-bottom:2px;">✕</button>'+
+      (excede? '<div class="banner warn" style="width:100%; margin:6px 0 0;">⚠ Cantidad mayor al stock disponible ('+stock+').</div>' : '')+
+    '</div>';
+  }).join('');
+
+  const cr=d.codigoResultado;
+
+  return ''+
+  '<button class="btn btn-ghost btn-sm section-gap" data-action="goto" data-route="ventas">← Cancelar</button>'+
+  '<div class="grid-2">'+
+    '<div>'+
+      '<div class="panel section-gap"><div class="panel-head"><h2>Cliente</h2></div><div class="panel-body">'+
+        '<div class="field"><select onchange="setVentaCliente(this.value)">'+
+          '<option value=""'+(!d.clienteId && !d.clienteModoNuevo?' selected':'')+'>Cliente ocasional (sin registrar)</option>'+
+          '<option value="__new__"'+(d.clienteModoNuevo?' selected':'')+'>+ Registrar cliente nuevo</option>'+
+          clientes.map(c=>'<option value="'+c.id+'"'+(d.clienteId===c.id?' selected':'')+'>'+esc(c.nombre)+'</option>').join('')+
+        '</select></div>'+
+        (d.clienteModoNuevo? '<div class="field-row">'+
+          '<div class="field"><label>Nombre</label><input value="'+esc(d.clienteNuevoNombre||'')+'" onchange="window.__ventaDraft.clienteNuevoNombre=this.value">'+
+          '</div><div class="field"><label>Teléfono</label><input value="'+esc(d.clienteNuevoTelefono||'')+'" onchange="window.__ventaDraft.clienteNuevoTelefono=this.value"></div></div>' : '')+
+        '<div class="field"><label>Fuente</label><select onchange="window.__ventaDraft.fuente=this.value">'+
+          FUENTES.map(f=>'<option'+(d.fuente===f?' selected':'')+'>'+f+'</option>').join('')+
+        '</select></div>'+
+      '</div></div>'+
+
+      '<div class="panel section-gap"><div class="panel-head"><h2>Productos</h2><button type="button" class="btn btn-sm" onclick="addVentaItem()">+ Agregar producto</button></div>'+
+      '<div style="padding:0 18px;">'+ (itemsHtml || '<div class="faint" style="padding:14px 0;">Agrega productos a la venta.</div>') +'</div>'+
+      '</div>'+
+
+      '<div class="panel"><div class="panel-head"><h2>Código de referido</h2></div><div class="panel-body">'+
+        '<div class="row" style="align-items:flex-end;">'+
+          '<div class="field" style="flex:1; margin-bottom:0;"><label>Código (opcional)</label><input class="mono" placeholder="VALS-AM26-XXXX" value="'+esc(d.codigoTexto||'')+'" onchange="window.__ventaDraft.codigoTexto=this.value"></div>'+
+          '<button type="button" class="btn" onclick="validarCodigoVenta()">Validar</button>'+
+        '</div>'+
+        (cr? '<div class="banner '+(cr.ok?'info':'bad')+'" style="margin-top:12px;">'+(cr.ok?'✓ ':'✕ ')+esc(cr.mensaje)+'</div>' : '')+
+      '</div></div>'+
+    '</div>'+
+
+    '<div class="panel" style="position:sticky; top:78px;">'+
+      '<div class="panel-head"><h2>Resumen</h2></div>'+
+      '<div class="panel-body">'+
+        '<div class="row between" style="margin-bottom:12px;"><span class="muted">Total</span><span class="tnum" style="font-family:var(--font-display); font-size:24px; font-weight:600;">'+fmtCOP(total)+'</span></div>'+
+        '<div class="field"><label>Método de pago</label><select onchange="window.__ventaDraft.metodoPago=this.value">'+
+          METODOS_PAGO.map(m=>'<option'+(d.metodoPago===m?' selected':'')+'>'+m+'</option>').join('')+
+        '</select></div>'+
+        '<button type="button" class="btn btn-primary" style="width:100%; justify-content:center;" onclick="submitVenta()">Registrar venta</button>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+}
+
+function addVentaItem(){ window.__ventaDraft.items.push({productoId:'',cantidad:1,precioUnitario:0}); renderCurrentView(); }
+function removeVentaItem(idx){ window.__ventaDraft.items.splice(idx,1); renderCurrentView(); }
+function updateVentaItem(idx, field, value){
+  const it=window.__ventaDraft.items[idx]; if(!it) return;
+  if(field==='productoId'){
+    it.productoId=value;
+    const p=getDoc('productos', value);
+    it.precioUnitario = p? Number(p.precioVenta||0) : 0;
+  } else {
+    it[field]=Number(value);
+  }
+  renderCurrentView();
+}
+function setVentaCliente(v){
+  const d=window.__ventaDraft;
+  if(v==='__new__'){ d.clienteModoNuevo=true; d.clienteId=''; }
+  else { d.clienteModoNuevo=false; d.clienteId=v; }
+  renderCurrentView();
+}
+function validarCodigoVenta(){
+  const d=window.__ventaDraft;
+  d.codigoResultado = d.codigoTexto && d.codigoTexto.trim()? validarCodigo(d.codigoTexto, null) : null;
+  if(d.codigoResultado && d.codigoResultado.ok) d.fuente='Referido';
+  renderCurrentView();
+}
+async function submitVenta(){
+  const d=window.__ventaDraft;
+  const items=(d.items||[]).filter(i=>i.productoId && Number(i.cantidad)>0);
+  if(!items.length){ toast('Agrega al menos un producto a la venta.','err'); return; }
+  let clienteId = d.clienteId || null, clienteNombre=null;
+  if(d.clienteModoNuevo){
+    if(!d.clienteNuevoNombre || !d.clienteNuevoNombre.trim()){ toast('Escribe el nombre del cliente nuevo.','err'); return; }
+    clienteId = await Store.add('clientes', {nombre:d.clienteNuevoNombre.trim(), telefono:d.clienteNuevoTelefono||'', fechaRegistro:todayISO(), estado:'Activo', notas:''});
+  } else if(!clienteId){
+    clienteNombre='Cliente ocasional';
+  }
+  let codigoAplicado=null;
+  if(d.codigoTexto && d.codigoTexto.trim()){
+    const val=validarCodigo(d.codigoTexto, null);
+    if(!val.ok){ toast('El código no es válido: '+val.mensaje, 'err'); return; }
+    codigoAplicado=val.codigo;
+  }
+  const itemsDetalle=items.map(i=>{
+    const p=getDoc('productos', i.productoId);
+    const cantidad=Number(i.cantidad), precio=Number(i.precioUnitario)||Number(p?p.precioVenta:0)||0;
+    return {productoId:i.productoId, nombre:p?p.nombre:'—', presentacion:p?(p.presentacion||''):'', cantidad, precioUnitario:precio, subtotal:cantidad*precio};
+  });
+  const total=itemsDetalle.reduce((s,i)=>s+i.subtotal,0);
+  const fuente = codigoAplicado? 'Referido' : (d.fuente||'Otro');
+  const ventaId = await Store.add('ventas', {clienteId:clienteId||null, clienteNombre, fecha:nowISO(), items:itemsDetalle, total, metodoPago:d.metodoPago||'Efectivo', codigoId:codigoAplicado?codigoAplicado.id:null, codigoTexto:codigoAplicado?codigoAplicado.codigo:null, fuente});
+  for(const it of itemsDetalle){
+    await Store.add('movimientos', {productoId:it.productoId, tipo:'venta', cantidad:-Math.abs(it.cantidad), fecha:nowISO(), motivo:'Venta', referencia:ventaId});
+  }
+  if(codigoAplicado){
+    await Store.update('codigos', codigoAplicado.id, {estado:'UTILIZADO', fechaUso:nowISO(), clienteReferidoId:clienteId||null, ventaId});
+  }
+  toast('Venta registrada correctamente.','ok');
+  window.__ventaDraft=null;
+  goto('ventas/'+ventaId);
+}
+
+/* ============================ CAMPAÑAS Y CÓDIGOS ============================ */
+VIEW_RENDERERS.campanas = function(route){
+  if(route.id) return renderCampanaDetalle(route.id);
+  const campanas=arr('campanas').sort((a,b)=>new Date(b.fechaInicio||0)-new Date(a.fechaInicio||0));
+  return ''+
+  '<div class="row between section-gap"><div class="faint">Campañas de referidos y sus códigos.</div>'+
+    '<button class="btn btn-primary" data-action="nueva-campana">+ Nueva campaña</button></div>'+
+  (campanas.length? '<div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:14px;">'+
+    campanas.map(c=>{
+      const codigos=arr('codigos').filter(k=>k.campanaId===c.id);
+      const utilizados=codigos.filter(k=>k.estado==='UTILIZADO').length;
+      const conv=codigos.length?Math.round(utilizados/codigos.length*100):0;
+      return '<div class="panel row-link" data-action="ver-campana" data-id="'+c.id+'" style="cursor:pointer;">'+
+        '<div class="panel-body">'+
+          '<div class="row between" style="margin-bottom:8px;"><h3 style="font-size:16px;">'+esc(c.nombre)+'</h3>'+badge(c.estado==='activa'?'ok':(c.estado==='planificada'?'info':'neutral'), c.estado||'—')+'</div>'+
+          '<div class="faint" style="font-size:12.5px; margin-bottom:14px;">'+fmtDate(c.fechaInicio)+' — '+fmtDate(c.fechaFin)+'</div>'+
+          '<div class="row" style="gap:20px;">'+statMini(codigos.length,'códigos')+statMini(utilizados,'usados')+statMini(conv+'%','conversión')+'</div>'+
+        '</div>'+
+      '</div>';
+    }).join('') + '</div>'
+    : '<div class="panel"><div class="empty-state"><div class="glyph">✺</div><div>Aún no has creado ninguna campaña.<br>Empieza con "Amor y Amistad 2026".</div><button class="btn btn-primary btn-sm" data-action="nueva-campana">+ Nueva campaña</button></div></div>');
+};
+
+function renderCampanaDetalle(id){
+  const c=getDoc('campanas', id);
+  if(!c) return '<div class="banner bad">Esta campaña no existe.</div>';
+  const codigos=arr('codigos').filter(k=>k.campanaId===id).sort((a,b)=>new Date(b.fechaCreacion)-new Date(a.fechaCreacion));
+  const utilizados=codigos.filter(k=>k.estado==='UTILIZADO');
+  const conv=codigos.length?Math.round(utilizados.length/codigos.length*100):0;
+  const clientesNuevos=new Set(utilizados.map(k=>k.clienteReferidoId).filter(Boolean)).size;
+  const ventasCampana=arr('ventas').filter(v=>v.codigoId && codigos.some(k=>k.id===v.codigoId));
+  const ventasTotal=ventasCampana.reduce((s,v)=>s+Number(v.total||0),0);
+  const costoTarjetas=(Number(c.costoTarjeta||0))*codigos.length;
+  const costoRegalos=arr('movimientos').filter(m=>m.tipo==='regalo' && m.campanaId===id).reduce((s,m)=>{ const p=getDoc('productos', m.productoId); return s+Math.abs(Number(m.cantidad||0))*Number(p?p.costo:0||0); },0);
+  const costoTotal=costoTarjetas+costoRegalos;
+
+  return ''+
+  '<button class="btn btn-ghost btn-sm section-gap" data-action="goto" data-route="campanas">← Volver a campañas</button>'+
+  '<div class="row between section-gap" style="align-items:flex-start;">'+
+    '<div><h2 style="font-size:20px;">'+esc(c.nombre)+'</h2><div class="faint">'+fmtDate(c.fechaInicio)+' — '+fmtDate(c.fechaFin)+'</div></div>'+
+    '<div class="row">'+badge(c.estado==='activa'?'ok':'neutral', c.estado||'—')+'<button class="btn btn-sm" data-action="editar-campana" data-id="'+c.id+'">Editar</button>'+
+    '<button class="btn btn-primary btn-sm" data-action="generar-codigo" data-id="'+c.id+'">+ Generar código</button></div>'+
+  '</div>'+
+
+  (c.descripcion? '<div class="panel section-gap"><div class="panel-body faint">'+esc(c.descripcion)+'</div></div>' : '')+
+
+  '<div class="kpi-grid">'+
+    statKpi(codigos.length,'Códigos generados')+
+    statKpi(utilizados.length,'Utilizados')+
+    statKpi(conv+'%','Conversión')+
+    statKpi(clientesNuevos,'Clientes nuevos')+
+    statKpi(fmtCOP(ventasTotal),'Ventas generadas')+
+    statKpi(fmtCOP(costoTotal),'Costo estimado')+
+  '</div>'+
+
+  '<div class="panel">'+
+    '<div class="panel-head"><h2>Códigos de esta campaña</h2></div>'+
+    '<div class="table-wrap"><table><thead><tr><th>Código</th><th>Cliente referente</th><th>Estado</th><th>Cliente referido</th><th>Fecha de uso</th><th></th></tr></thead><tbody>'+
+    (codigos.length? codigos.map(k=>{
+      const ref=getDoc('clientes', k.clienteReferenteId);
+      const referido=k.clienteReferidoId?getDoc('clientes', k.clienteReferidoId):null;
+      const ef=estadoEfectivo(k);
+      return '<tr><td><span class="code-chip">'+esc(k.codigo)+'</span></td>'+
+        '<td>'+(ref?'<a class="link-btn" data-action="ver-cliente" data-id="'+ref.id+'">'+esc(ref.nombre)+'</a>':'—')+'</td>'+
+        '<td>'+badge(badgeEstadoCodigo(ef), ef)+'</td>'+
+        '<td>'+esc(referido?referido.nombre:'—')+'</td>'+
+        '<td class="faint">'+fmtDate(k.fechaUso)+'</td>'+
+        '<td class="row" style="gap:6px;">'+
+          '<button class="btn btn-sm" data-action="ver-tarjeta" data-id="'+k.id+'">Ver tarjeta</button>'+
+          (ef==='ACTIVO'? '<button class="btn btn-sm btn-danger" data-action="bloquear-codigo" data-id="'+k.id+'">Bloquear</button>' : '')+
+          (ef==='BLOQUEADO'||ef==='CANCELADO'? '<button class="btn btn-sm" data-action="reactivar-codigo" data-id="'+k.id+'">Reactivar</button>' : '')+
+        '</td></tr>';
+    }).join('') : '<tr class="empty-row"><td colspan="6">Aún no has generado códigos para esta campaña.</td></tr>')+
+    '</tbody></table></div>'+
+  '</div>';
+}
+function statKpi(value,label){ return '<div class="kpi"><div class="kpi-label">'+label+'</div><div class="kpi-value tnum" style="font-size:20px;">'+value+'</div></div>'; }
+
+function formCampana(existing){
+  const c=existing||{fechaInicio:todayISO(), fechaFin:todayISO()};
+  return ''+
+  '<div class="modal-head"><h3>'+(existing?'Editar campaña':'Nueva campaña')+'</h3><button class="icon-btn btn btn-ghost" data-action="close-modal">✕</button></div>'+
+  '<form data-form="campana" data-id="'+(existing?existing.id:'')+'">'+
+  '<div class="modal-body">'+
+    '<div class="field"><label>Nombre</label><input name="nombre" required value="'+esc(c.nombre||'')+'" placeholder="Amor y Amistad 2026"></div>'+
+    '<div class="field-row">'+
+      '<div class="field"><label>Fecha de inicio</label><input name="fechaInicio" type="date" value="'+esc(c.fechaInicio||'')+'"></div>'+
+      '<div class="field"><label>Fecha de fin</label><input name="fechaFin" type="date" value="'+esc(c.fechaFin||'')+'"></div>'+
+    '</div>'+
+    '<div class="field"><label>Descripción</label><textarea name="descripcion" rows="2" placeholder="El café que se comparte: 4 clientes fieles reciben una media libra para compartir…">'+esc(c.descripcion||'')+'</textarea></div>'+
+    '<div class="field-row">'+
+      '<div class="field"><label>Beneficio para el referido</label><input name="beneficioReferido" value="'+esc(c.beneficioReferido||'')+'" placeholder="10% en su primera compra"></div>'+
+      '<div class="field"><label>Beneficio para quien refiere</label><input name="beneficioReferente" value="'+esc(c.beneficioReferente||'')+'" placeholder="10% en su próxima compra"></div>'+
+    '</div>'+
+    '<div class="field-row">'+
+      '<div class="field"><label>Costo por tarjeta (COP) <span class="hint">tarjeta + empaque</span></label><input name="costoTarjeta" type="number" min="0" step="500" value="'+esc(c.costoTarjeta||0)+'"></div>'+
+      '<div class="field"><label>Estado</label><select name="estado"><option value="planificada"'+(c.estado==='planificada'?' selected':'')+'>Planificada</option><option value="activa"'+(!c.estado||c.estado==='activa'?' selected':'')+'>Activa</option><option value="finalizada"'+(c.estado==='finalizada'?' selected':'')+'>Finalizada</option></select></div>'+
+    '</div>'+
+  '</div>'+
+  '<div class="modal-foot"><button type="button" class="btn" data-action="close-modal">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div>'+
+  '</form>';
+}
+
+function formGenerarCodigo(campanaId){
+  const c=getDoc('campanas', campanaId);
+  const clientes=arr('clientes').sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+  if(!clientes.length){
+    return '<div class="modal-head"><h3>Generar código</h3><button class="icon-btn btn btn-ghost" data-action="close-modal">✕</button></div>'+
+      '<div class="modal-body"><div class="banner warn">Primero registra al menos un cliente para asignarle el código como referente.</div></div>'+
+      '<div class="modal-foot"><button class="btn" data-action="close-modal">Cerrar</button></div>';
+  }
+  return ''+
+  '<div class="modal-head"><h3>Generar código — '+esc(c.nombre)+'</h3><button class="icon-btn btn btn-ghost" data-action="close-modal">✕</button></div>'+
+  '<form data-form="codigo" data-campana="'+campanaId+'">'+
+  '<div class="modal-body">'+
+    '<div class="field"><label>Cliente referente (embajador)</label><select name="clienteReferenteId" required>'+
+      clientes.map(cl=>'<option value="'+cl.id+'">'+esc(cl.nombre)+'</option>').join('')+
+    '</select></div>'+
+    '<div class="field"><label>Beneficio</label><input name="beneficio" value="'+esc(c.beneficioReferido||'')+'"></div>'+
+    '<div class="field"><label>Fecha de expiración <span class="hint">opcional</span></label><input name="fechaExpiracion" type="date" value="'+esc(c.fechaFin||'')+'"></div>'+
+  '</div>'+
+  '<div class="modal-foot"><button type="button" class="btn" data-action="close-modal">Cancelar</button><button type="submit" class="btn btn-primary">Generar código</button></div>'+
+  '</form>';
+}
+
+function renderTarjetaCodigo(codigoId){
+  const k=getDoc('codigos', codigoId);
+  if(!k) return '';
+  const ref=getDoc('clientes', k.clienteReferenteId);
+  const qrId='qr-'+uid();
+  setTimeout(()=>{
+    const el=document.getElementById(qrId);
+    if(el && window.QRCode){ el.innerHTML=''; new QRCode(el, {text:k.codigo, width:132, height:132, colorDark:'#2a211b', colorLight:'#ffffff'}); }
+  }, 20);
+  return ''+
+  '<div class="modal-head"><h3>Tarjeta de referido</h3><button class="icon-btn btn btn-ghost" data-action="close-modal">✕</button></div>'+
+  '<div class="modal-body">'+
+    '<div id="print-card-'+k.id+'" class="card-preview">'+
+      '<h4>Val\'s Coffee ☕</h4>'+
+      '<p>Este café es para ti, pero no queremos que te lo tomes solo.<br>Gracias por acompañar a Val\'s Coffee'+(ref?', '+esc(ref.nombre.split(' ')[0]):'')+'.<br>Comparte una taza con alguien especial —<br>si usa tu código en su primera compra, ambos ganan.</p>'+
+      '<div class="qr-box"><div id="'+qrId+'"></div></div>'+
+      '<div class="code-big">'+esc(k.codigo)+'</div>'+
+      (k.beneficio? '<p style="margin-top:12px; margin-bottom:0;">'+esc(k.beneficio)+'</p>' : '')+
+    '</div>'+
+  '</div>'+
+  '<div class="modal-foot"><button class="btn" data-action="close-modal">Cerrar</button><button class="btn btn-primary" onclick="imprimirTarjeta(\''+k.id+'\')">Imprimir / guardar PDF</button></div>';
+}
+function imprimirTarjeta(id){
+  const src=document.getElementById('print-card-'+id);
+  const area=document.getElementById('print-area');
+  if(src && area){ area.innerHTML=src.outerHTML; window.print(); }
+}
+
+function formValidarCodigo(){
+  return ''+
+  '<div class="modal-head"><h3>Validar código</h3><button class="icon-btn btn btn-ghost" data-action="close-modal">✕</button></div>'+
+  '<div class="modal-body">'+
+    '<div class="row" style="align-items:flex-end;">'+
+      '<div class="field" style="flex:1; margin-bottom:0;"><label>Código</label><input id="validar-input" class="mono" placeholder="VALS-AM26-XXXX"></div>'+
+      '<button class="btn btn-primary" onclick="ejecutarValidacion()">Validar</button>'+
+    '</div>'+
+    '<div id="validar-resultado" style="margin-top:14px;"></div>'+
+  '</div>'+
+  '<div class="modal-foot"><button class="btn" data-action="close-modal">Cerrar</button></div>';
+}
+function ejecutarValidacion(){
+  const val=document.getElementById('validar-input').value;
+  const res=validarCodigo(val, null);
+  const box=document.getElementById('validar-resultado');
+  const ref = res.codigo? getDoc('clientes', res.codigo.clienteReferenteId) : null;
+  box.innerHTML='<div class="banner '+(res.ok?'info':'bad')+'">'+(res.ok?'✓ ':'✕ ')+esc(res.mensaje)+'</div>'+
+    (res.codigo? '<div class="faint" style="font-size:12.5px;">Referido por: '+esc(ref?ref.nombre:'—')+' · Campaña: '+esc(getDoc('campanas', res.codigo.campanaId)?.nombre||'—')+'</div>' : '');
+}
+
+/* ================================ REPORTES ================================ */
+VIEW_RENDERERS.reportes = function(){
+  const tab=window.__reporteTab||'ventas';
+  const tabs=[['ventas','Ventas'],['clientes','Clientes'],['campanas','Campañas'],['inventario','Inventario']];
+  return ''+
+  '<div class="tabs">'+tabs.map(([id,label])=>'<button class="tab'+(tab===id?' active':'')+'" onclick="window.__reporteTab=\''+id+'\'; renderCurrentView();">'+label+'</button>').join('')+'</div>'+
+  ({ventas:reporteVentas, clientes:reporteClientes, campanas:reporteCampanas, inventario:reporteInventario}[tab] || reporteVentas)();
+};
+
+function reporteVentas(){
+  const ventas=arr('ventas');
+  const dias=[];
+  for(let i=13;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); dias.push(d); }
+  const porDia=dias.map(d=>({d, total:ventas.filter(v=>isSameDay(v.fecha,d)).reduce((s,v)=>s+Number(v.total||0),0)}));
+  const max=Math.max(1, ...porDia.map(x=>x.total));
+
+  const porProducto={};
+  ventas.forEach(v=>(v.items||[]).forEach(i=>{ porProducto[i.nombre]=(porProducto[i.nombre]||0)+Number(i.cantidad||0); }));
+  const topProductos=Object.entries(porProducto).sort((a,b)=>b[1]-a[1]).slice(0,10);
+
+  const porCliente={};
+  ventas.forEach(v=>{ const key=v.clienteId||('__'+(v.clienteNombre||'ocasional')); porCliente[key]=(porCliente[key]||0)+Number(v.total||0); });
+  const topClientes=Object.entries(porCliente).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([key,total])=>{
+    const cli=key.startsWith('__')?null:getDoc('clientes', key);
+    return {nombre: cli?cli.nombre:key.replace('__',''), total};
+  });
+
+  return ''+
+  '<div class="panel section-gap"><div class="panel-head"><h2>Ventas — últimos 14 días</h2></div>'+
+  '<div class="panel-body"><div class="bars-chart">'+
+    porDia.map(x=>'<div class="bar-col"><div class="bar" style="height:'+Math.max(3,Math.round(x.total/max*100))+'%" title="'+fmtCOP(x.total)+'"></div><div class="bar-lbl">'+x.d.toLocaleDateString('es-CO',{day:'2-digit',month:'2-digit'})+'</div></div>').join('')+
+  '</div></div></div>'+
+  '<div class="grid-2">'+
+    '<div class="panel"><div class="panel-head"><h2>Top productos (unidades)</h2></div><div class="table-wrap"><table><thead><tr><th>Producto</th><th class="num">Unidades</th></tr></thead><tbody>'+
+    (topProductos.length? topProductos.map(([n,q])=>'<tr><td>'+esc(n)+'</td><td class="num tnum">'+q+'</td></tr>').join('') : '<tr class="empty-row"><td colspan="2">Sin datos aún.</td></tr>')+
+    '</tbody></table></div></div>'+
+    '<div class="panel"><div class="panel-head"><h2>Top clientes (valor)</h2></div><div class="table-wrap"><table><thead><tr><th>Cliente</th><th class="num">Total</th></tr></thead><tbody>'+
+    (topClientes.length? topClientes.map(c=>'<tr><td>'+esc(c.nombre)+'</td><td class="num tnum">'+fmtCOP(c.total)+'</td></tr>').join('') : '<tr class="empty-row"><td colspan="2">Sin datos aún.</td></tr>')+
+    '</tbody></table></div></div>'+
+  '</div>';
+}
+
+function reporteClientes(){
+  const clientes=arr('clientes').map(c=>Object.assign({}, c, {_stats:statsCliente(c.id)}));
+  const nuevos=clientes.filter(c=>daysAgo(c.fechaRegistro)<=30).length;
+  const recurrentes=clientes.filter(c=>c._stats.numCompras>=2).length;
+  const inactivos=clientes.filter(c=>c._stats.ultima && daysAgo(c._stats.ultima)>60).length;
+  const ordenado=clientes.slice().sort((a,b)=>b._stats.total-a._stats.total);
+  return ''+
+  '<div class="kpi-grid">'+statKpi(nuevos,'Nuevos (30 días)')+statKpi(recurrentes,'Recurrentes (2+ compras)')+statKpi(inactivos,'Inactivos (60+ días)')+statKpi(clientes.length,'Total registrados')+'</div>'+
+  '<div class="panel"><div class="panel-head"><h2>Clientes por valor total</h2></div><div class="table-wrap"><table><thead><tr><th>Cliente</th><th class="num">Compras</th><th class="num">Total</th><th>Última compra</th><th class="num">Referidos</th></tr></thead><tbody>'+
+  (ordenado.length? ordenado.map(c=>'<tr class="row-link" data-action="ver-cliente" data-id="'+c.id+'"><td>'+esc(c.nombre)+'</td><td class="num tnum">'+c._stats.numCompras+'</td><td class="num tnum">'+fmtCOP(c._stats.total)+'</td><td class="faint">'+fmtDate(c._stats.ultima)+'</td><td class="num tnum">'+c._stats.referidos+'</td></tr>').join('') : '<tr class="empty-row"><td colspan="5">Aún no hay clientes.</td></tr>')+
+  '</tbody></table></div></div>';
+}
+
+function reporteCampanas(){
+  const campanas=arr('campanas');
+  return '<div class="panel"><div class="panel-head"><h2>Desempeño por campaña</h2></div><div class="table-wrap"><table><thead><tr><th>Campaña</th><th class="num">Generados</th><th class="num">Usados</th><th class="num">Conversión</th><th class="num">Clientes nuevos</th><th class="num">Ventas generadas</th><th class="num">Costo est.</th><th class="num">Margen</th></tr></thead><tbody>'+
+  (campanas.length? campanas.map(c=>{
+    const codigos=arr('codigos').filter(k=>k.campanaId===c.id);
+    const utilizados=codigos.filter(k=>k.estado==='UTILIZADO');
+    const conv=codigos.length?Math.round(utilizados.length/codigos.length*100):0;
+    const nuevos=new Set(utilizados.map(k=>k.clienteReferidoId).filter(Boolean)).size;
+    const ventasCamp=arr('ventas').filter(v=>v.codigoId && codigos.some(k=>k.id===v.codigoId));
+    const ventasTotal=ventasCamp.reduce((s,v)=>s+Number(v.total||0),0);
+    const costoTarjetas=(Number(c.costoTarjeta||0))*codigos.length;
+    const costoRegalos=arr('movimientos').filter(m=>m.tipo==='regalo' && m.campanaId===c.id).reduce((s,m)=>{ const p=getDoc('productos', m.productoId); return s+Math.abs(Number(m.cantidad||0))*Number(p?p.costo:0||0); },0);
+    const costo=costoTarjetas+costoRegalos;
+    const margen=ventasTotal-costo;
+    return '<tr class="row-link" data-action="ver-campana" data-id="'+c.id+'"><td>'+esc(c.nombre)+'</td><td class="num tnum">'+codigos.length+'</td><td class="num tnum">'+utilizados.length+'</td><td class="num tnum">'+conv+'%</td><td class="num tnum">'+nuevos+'</td><td class="num tnum">'+fmtCOP(ventasTotal)+'</td><td class="num tnum faint">'+fmtCOP(costo)+'</td><td class="num tnum" style="color:'+(margen>=0?'var(--success)':'var(--danger)')+'">'+fmtCOP(margen)+'</td></tr>';
+  }).join('') : '<tr class="empty-row"><td colspan="8">Aún no hay campañas.</td></tr>')+
+  '</tbody></table></div></div>';
+}
+
+function reporteInventario(){
+  const productos=arr('productos');
+  const bajos=productos.filter(p=>stockDe(p.id)<=Number(p.stockMinimo||0));
+  const movimientos=arr('movimientos').sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,15);
+  return ''+
+  (bajos.length? '<div class="banner warn">⚠ '+bajos.length+' producto(s) en stock bajo: '+bajos.map(p=>esc(p.nombre)).join(', ')+'</div>' : '')+
+  '<div class="panel section-gap"><div class="panel-head"><h2>Stock por producto</h2></div><div class="table-wrap"><table><thead><tr><th>Producto</th><th class="num">Stock</th><th class="num">Mínimo</th><th>Estado</th></tr></thead><tbody>'+
+  (productos.length? productos.map(p=>{ const s=stockDe(p.id), min=Number(p.stockMinimo||0); return '<tr><td>'+esc(p.nombre)+' '+esc(p.presentacion||'')+'</td><td class="num tnum">'+s+'</td><td class="num tnum faint">'+min+'</td><td>'+badge(s<=min?'bad':'ok', s<=min?'Bajo':'OK')+'</td></tr>'; }).join('') : '<tr class="empty-row"><td colspan="4">Sin productos.</td></tr>')+
+  '</tbody></table></div></div>'+
+  '<div class="panel"><div class="panel-head"><h2>Últimos movimientos</h2></div><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th class="num">Cantidad</th></tr></thead><tbody>'+
+  (movimientos.length? movimientos.map(m=>{ const p=getDoc('productos', m.productoId); const tipo=MOV_TIPOS[m.tipo]||{label:m.tipo}; return '<tr><td class="faint">'+fmtDateTime(m.fecha)+'</td><td>'+esc(p?p.nombre:'—')+'</td><td>'+esc(tipo.label)+'</td><td class="num tnum">'+(m.cantidad>0?'+':'')+m.cantidad+'</td></tr>'; }).join('') : '<tr class="empty-row"><td colspan="4">Sin movimientos.</td></tr>')+
+  '</tbody></table></div></div>';
+}
+
+/* ============================== ACCIONES (clicks) ============================== */
+document.addEventListener('click', function(e){
+  const btn=e.target.closest('[data-action]');
+  if(!btn) return;
+  const action=btn.dataset.action;
+  const id=btn.dataset.id;
+
+  switch(action){
+    case 'goto': goto(btn.dataset.route); break;
+    case 'toggle-sidebar': document.getElementById('sidebar').classList.toggle('open'); break;
+    case 'close-modal': closeModal(); break;
+
+    case 'open-validar-codigo': openModal(formValidarCodigo()); break;
+
+    case 'go-nueva-venta': {
+      const clienteId=btn.dataset.cliente||'';
+      window.__ventaDraft={clienteId, clienteModoNuevo:false, clienteNuevoNombre:'', clienteNuevoTelefono:'', fuente:'Cliente recurrente', metodoPago:'Efectivo', items:[{productoId:'',cantidad:1,precioUnitario:0}], codigoTexto:'', codigoResultado:null};
+      goto('ventas/nueva');
+      break;
+    }
+    case 'ver-venta': goto('ventas/'+id); break;
+
+    case 'nuevo-cliente': openModal(formCliente(null)); break;
+    case 'editar-cliente': openModal(formCliente(getDoc('clientes', id))); break;
+    case 'ver-cliente': goto('clientes/'+id); break;
+
+    case 'nuevo-producto': openModal(formProducto(null)); break;
+    case 'editar-producto': openModal(formProducto(getDoc('productos', id))); break;
+
+    case 'nuevo-movimiento': openModal(formMovimiento()); break;
+
+    case 'nueva-campana': openModal(formCampana(null)); break;
+    case 'editar-campana': openModal(formCampana(getDoc('campanas', id))); break;
+    case 'ver-campana': goto('campanas/'+id); break;
+    case 'generar-codigo': openModal(formGenerarCodigo(id)); break;
+
+    case 'ver-tarjeta': openModal(renderTarjetaCodigo(id), {wide:false}); break;
+    case 'bloquear-codigo':
+      Store.update('codigos', id, {estado:'BLOQUEADO'}).then(()=>toast('Código bloqueado.','ok'));
+      break;
+    case 'reactivar-codigo':
+      Store.update('codigos', id, {estado:'ACTIVO'}).then(()=>toast('Código reactivado.','ok'));
+      break;
+  }
+});
+
+/* ============================== FORMULARIOS (submit) ============================== */
+document.addEventListener('submit', function(e){
+  const form=e.target.closest('form[data-form]');
+  if(!form) return;
+  e.preventDefault();
+  const name=form.dataset.form;
+  const fd=new FormData(form);
+  const data={};
+  fd.forEach((v,k)=>{ data[k]=v; });
+
+  if(name==='cliente'){
+    const payload={nombre:data.nombre.trim(), telefono:data.telefono||'', fechaRegistro:data.fechaRegistro||todayISO(), estado:data.estado||'Activo', notas:data.notas||''};
+    const done = form.dataset.id? Store.update('clientes', form.dataset.id, payload) : Store.add('clientes', payload);
+    done.then(()=>{ toast('Cliente guardado.','ok'); closeModal(); });
+  }
+
+  else if(name==='producto'){
+    const payload={nombre:data.nombre.trim(), presentacion:data.presentacion||'', codigo:data.codigo||'', precioVenta:Number(data.precioVenta)||0, costo:Number(data.costo)||0, stockMinimo:Number(data.stockMinimo)||0, proveedor:data.proveedor||'', estado:data.estado||'Activo'};
+    const done = form.dataset.id? Store.update('productos', form.dataset.id, payload) : Store.add('productos', payload);
+    done.then(()=>{ toast('Producto guardado.','ok'); closeModal(); });
+  }
+
+  else if(name==='movimiento'){
+    let cantidad=Number(data.cantidad)||0;
+    const cfg=MOV_TIPOS[data.tipo];
+    if(data.tipo!=='ajuste') cantidad = Math.abs(cantidad) * (cfg && cfg.signo<0? -1 : 1);
+    const payload={productoId:data.productoId, tipo:data.tipo, cantidad, fecha:(data.fecha?data.fecha:todayISO())+'T'+new Date().toTimeString().slice(0,8), motivo:data.motivo||'', campanaId:data.campanaId||null, referencia:null};
+    Store.add('movimientos', payload).then(()=>{ toast('Movimiento registrado.','ok'); closeModal(); });
+  }
+
+  else if(name==='campana'){
+    const payload={nombre:data.nombre.trim(), fechaInicio:data.fechaInicio||todayISO(), fechaFin:data.fechaFin||todayISO(), descripcion:data.descripcion||'', beneficioReferido:data.beneficioReferido||'', beneficioReferente:data.beneficioReferente||'', costoTarjeta:Number(data.costoTarjeta)||0, estado:data.estado||'activa'};
+    const done = form.dataset.id? Store.update('campanas', form.dataset.id, payload) : Store.add('campanas', payload);
+    done.then(()=>{ toast('Campaña guardada.','ok'); closeModal(); });
+  }
+
+  else if(name==='codigo'){
+    const campanaId=form.dataset.campana;
+    const campana=getDoc('campanas', campanaId);
+    const codigo=generarCodigoUnico(slugPrefix(campana?campana.nombre:'CAMP'));
+    const payload={codigo, campanaId, clienteReferenteId:data.clienteReferenteId, beneficio:data.beneficio||'', fechaCreacion:nowISO(), fechaExpiracion:data.fechaExpiracion||null, estado:'ACTIVO', fechaUso:null, clienteReferidoId:null, ventaId:null};
+    Store.add('codigos', payload).then(()=>{ toast('Código '+codigo+' generado.','ok'); closeModal(); });
+  }
+});
+
+/* ================================== BOOT ================================== */
+Store.init();
+renderCurrentView();
+</script>
+</body>
+</html>
