@@ -820,52 +820,82 @@ VIEW_RENDERERS.inventario = function(){
 
   '<div class="panel">'+
     '<div class="panel-head"><h2>Movimientos recientes</h2></div>'+
-    '<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th class="num">Cantidad</th><th>Motivo</th></tr></thead><tbody>'+
+    '<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th class="num">Cantidad</th><th>Motivo</th><th></th></tr></thead><tbody>'+
     (movimientos.length? movimientos.map(m=>{
       const p=getDoc('productos', m.productoId);
       const tipo=MOV_TIPOS[m.tipo]||{label:m.tipo};
       const positivo=Number(m.cantidad)>0;
+      const esDeVenta = m.tipo==='venta';
       return '<tr><td class="faint">'+fmtDateTime(m.fecha)+'</td><td>'+esc(p?p.nombre:'—')+'</td>'+
         '<td>'+badge(m.tipo==='entrada'?'ok':(m.tipo==='ajuste'?'info':'neutral'), tipo.label)+'</td>'+
         '<td class="num tnum" style="color:'+(positivo?'var(--success)':'var(--danger)')+'">'+(positivo?'+':'')+m.cantidad+'</td>'+
-        '<td class="faint">'+esc(m.motivo||'—')+'</td></tr>';
-    }).join('') : '<tr class="empty-row"><td colspan="5">Sin movimientos todavía.</td></tr>')+
+        '<td class="faint">'+esc(m.motivo||'—')+'</td>'+
+        '<td class="row" style="gap:6px;">'+(esDeVenta? '<span class="faint" style="font-size:11.5px;">De una venta</span>' :
+          '<button class="btn btn-sm" data-action="editar-movimiento" data-id="'+m.id+'">Editar</button>'+
+          '<button class="btn btn-sm btn-danger" data-action="eliminar-movimiento" data-id="'+m.id+'">Eliminar</button>')+
+        '</td></tr>';
+    }).join('') : '<tr class="empty-row"><td colspan="6">Sin movimientos todavía.</td></tr>')+
     '</tbody></table></div>'+
+    '<div class="panel-body faint" style="font-size:12px; border-top:1px solid var(--line-soft);">Los movimientos generados por una venta se editan o deshacen eliminando esa venta, no desde aquí.</div>'+
   '</div>';
 };
 
-function formMovimiento(){
+function formMovimiento(existing){
   const productos=arr('productos');
   const campanas=arr('campanas');
+  const m=existing||{};
   if(!productos.length){
     return '<div class="modal-head"><h3>Registrar movimiento</h3><button class="icon-btn btn btn-ghost" data-action="close-modal">✕</button></div>'+
       '<div class="modal-body"><div class="banner warn">Primero crea al menos un producto en la sección Productos.</div></div>'+
       '<div class="modal-foot"><button class="btn" data-action="close-modal">Cerrar</button></div>';
   }
+  const tipoInicial=m.tipo||'entrada';
+  const hints={entrada:'Se sumará al stock.', regalo:'Se restará del stock.', danado:'Se restará del stock.', ajuste:'Usa un número negativo para restar.'};
   return ''+
-  '<div class="modal-head"><h3>Registrar movimiento de inventario</h3><button class="icon-btn btn btn-ghost" data-action="close-modal">✕</button></div>'+
-  '<form data-form="movimiento">'+
+  '<div class="modal-head"><h3>'+(existing?'Editar movimiento':'Registrar movimiento de inventario')+'</h3><button class="icon-btn btn btn-ghost" data-action="close-modal">✕</button></div>'+
+  '<form data-form="movimiento" data-id="'+(existing?existing.id:'')+'">'+
   '<div class="modal-body">'+
     '<div class="field"><label for="m-producto">Producto</label><select id="m-producto" name="productoId" required>'+
-      productos.map(p=>'<option value="'+p.id+'">'+esc(p.nombre)+' '+esc(p.presentacion||'')+' (stock: '+stockDe(p.id)+')</option>').join('')+
+      productos.map(p=>'<option value="'+p.id+'"'+(m.productoId===p.id?' selected':'')+'>'+esc(p.nombre)+' '+esc(p.presentacion||'')+' (stock: '+stockDe(p.id)+')</option>').join('')+
     '</select></div>'+
     '<div class="field-row">'+
       '<div class="field"><label for="m-tipo">Tipo de movimiento</label><select id="m-tipo" name="tipo" onchange="document.getElementById(\'m-campana-wrap\').style.display=this.value===\'regalo\'?\'flex\':\'none\'; document.getElementById(\'m-signo-hint\').textContent = this.value===\'entrada\'?\'Se sumará al stock.\':(this.value===\'ajuste\'?\'Usa un número negativo para restar.\':\'Se restará del stock.\');">'+
-        '<option value="entrada">Entrada de mercancía</option>'+
-        '<option value="regalo">Regalo de campaña</option>'+
-        '<option value="danado">Producto dañado / pérdida</option>'+
-        '<option value="ajuste">Ajuste manual</option>'+
+        '<option value="entrada"'+(tipoInicial==='entrada'?' selected':'')+'>Entrada de mercancía</option>'+
+        '<option value="regalo"'+(tipoInicial==='regalo'?' selected':'')+'>Regalo de campaña</option>'+
+        '<option value="danado"'+(tipoInicial==='danado'?' selected':'')+'>Producto dañado / pérdida</option>'+
+        '<option value="ajuste"'+(tipoInicial==='ajuste'?' selected':'')+'>Ajuste manual</option>'+
       '</select></div>'+
-      '<div class="field"><label for="m-cantidad">Cantidad</label><input id="m-cantidad" name="cantidad" type="number" required step="1" value="1"><span class="hint" id="m-signo-hint">Se sumará al stock.</span></div>'+
+      '<div class="field"><label for="m-cantidad">Cantidad</label><input id="m-cantidad" name="cantidad" type="number" required step="1" value="'+(existing? Math.abs(m.cantidad) : 1)+'"><span class="hint" id="m-signo-hint">'+hints[tipoInicial]+'</span></div>'+
     '</div>'+
-    '<div class="field-row" id="m-campana-wrap" style="display:none;">'+
-      '<div class="field"><label for="m-campana">Campaña relacionada</label><select id="m-campana" name="campanaId"><option value="">—</option>'+campanas.map(c=>'<option value="'+c.id+'">'+esc(c.nombre)+'</option>').join('')+'</select></div>'+
+    '<div class="field-row" id="m-campana-wrap" style="display:'+(tipoInicial==='regalo'?'flex':'none')+';">'+
+      '<div class="field"><label for="m-campana">Campaña relacionada</label><select id="m-campana" name="campanaId"><option value="">—</option>'+campanas.map(c=>'<option value="'+c.id+'"'+(m.campanaId===c.id?' selected':'')+'>'+esc(c.nombre)+'</option>').join('')+'</select></div>'+
     '</div>'+
-    '<div class="field"><label for="m-fecha">Fecha</label><input id="m-fecha" name="fecha" type="date" value="'+todayISO()+'"></div>'+
-    '<div class="field"><label for="m-motivo">Motivo / nota</label><input id="m-motivo" name="motivo" placeholder="Ej: llegada de 50 bolsas, tarjeta Amor y Amistad…"></div>'+
+    '<div class="field"><label for="m-fecha">Fecha</label><input id="m-fecha" name="fecha" type="date" value="'+(m.fecha? m.fecha.slice(0,10) : todayISO())+'"></div>'+
+    '<div class="field"><label for="m-motivo">Motivo / nota</label><input id="m-motivo" name="motivo" value="'+esc(m.motivo||'')+'" placeholder="Ej: llegada de 50 bolsas, tarjeta Amor y Amistad…"></div>'+
+    (existing? '<div class="hint">Si el tipo es "Ajuste manual" puedes usar un número negativo (por ejemplo -15) para restar del stock.</div>' : '')+
   '</div>'+
-  '<div class="modal-foot"><button type="button" class="btn" data-action="close-modal">Cancelar</button><button type="submit" class="btn btn-primary">Registrar</button></div>'+
+  '<div class="modal-foot"><button type="button" class="btn" data-action="close-modal">Cancelar</button><button type="submit" class="btn btn-primary">'+(existing?'Guardar cambios':'Registrar')+'</button></div>'+
   '</form>';
+}
+
+function formConfirmarEliminarMovimiento(id){
+  const m=getDoc('movimientos', id);
+  if(!m) return '';
+  const p=getDoc('productos', m.productoId);
+  const tipo=MOV_TIPOS[m.tipo]||{label:m.tipo};
+  return ''+
+  '<div class="modal-head"><h3>Eliminar movimiento</h3><button class="icon-btn btn btn-ghost" data-action="close-modal">✕</button></div>'+
+  '<div class="modal-body">'+
+    '<div class="banner bad">Esta acción no se puede deshacer.</div>'+
+    '<p>Vas a eliminar: <strong>'+esc(tipo.label)+'</strong> de <strong>'+(m.cantidad>0?'+':'')+m.cantidad+'</strong> unidades de <strong>'+esc(p?p.nombre:'—')+'</strong> ('+fmtDateTime(m.fecha)+').</p>'+
+    '<p class="faint" style="font-size:12.5px;">El stock del producto se recalculará sin este movimiento.</p>'+
+  '</div>'+
+  '<div class="modal-foot"><button class="btn" data-action="close-modal">Cancelar</button><button class="btn btn-danger" onclick="confirmarEliminarMovimiento(\''+id+'\')">Sí, eliminar</button></div>';
+}
+async function confirmarEliminarMovimiento(id){
+  await Store.remove('movimientos', id);
+  closeModal();
+  toast('Movimiento eliminado. El stock se actualizó.','ok');
 }
 
 /* ================================= VENTAS ================================= */
@@ -1374,6 +1404,8 @@ document.addEventListener('click', function(e){
     case 'editar-producto': openModal(formProducto(getDoc('productos', id))); break;
 
     case 'nuevo-movimiento': openModal(formMovimiento()); break;
+    case 'editar-movimiento': openModal(formMovimiento(getDoc('movimientos', id))); break;
+    case 'eliminar-movimiento': openModal(formConfirmarEliminarMovimiento(id)); break;
 
     case 'nueva-campana': openModal(formCampana(null)); break;
     case 'editar-campana': openModal(formCampana(getDoc('campanas', id))); break;
@@ -1416,8 +1448,10 @@ document.addEventListener('submit', function(e){
     let cantidad=Number(data.cantidad)||0;
     const cfg=MOV_TIPOS[data.tipo];
     if(data.tipo!=='ajuste') cantidad = Math.abs(cantidad) * (cfg && cfg.signo<0? -1 : 1);
-    const payload={productoId:data.productoId, tipo:data.tipo, cantidad, fecha:(data.fecha?data.fecha:todayISO())+'T'+new Date().toTimeString().slice(0,8), motivo:data.motivo||'', campanaId:data.campanaId||null, referencia:null};
-    Store.add('movimientos', payload).then(()=>{ toast('Movimiento registrado.','ok'); closeModal(); });
+    const existente = form.dataset.id? getDoc('movimientos', form.dataset.id) : null;
+    const payload={productoId:data.productoId, tipo:data.tipo, cantidad, fecha:(data.fecha?data.fecha:todayISO())+'T'+new Date().toTimeString().slice(0,8), motivo:data.motivo||'', campanaId:data.campanaId||null, referencia: existente?existente.referencia:null};
+    const done = form.dataset.id? Store.update('movimientos', form.dataset.id, payload) : Store.add('movimientos', payload);
+    done.then(()=>{ toast(form.dataset.id?'Movimiento actualizado.':'Movimiento registrado.','ok'); closeModal(); });
   }
 
   else if(name==='campana'){
