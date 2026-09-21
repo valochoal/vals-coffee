@@ -301,7 +301,7 @@ const FUENTES = ['Cliente recurrente','Referido','Instagram','WhatsApp','Evento'
 const METODOS_PAGO = ['Efectivo','Transferencia','Tarjeta','Otro'];
 const MOV_TIPOS = {
   entrada: {label:'Entrada de mercancía', signo:1},
-  regalo: {label:'Regalo de campaña', signo:-1},
+  regalo: {label:'Obsequio / cortesía', signo:-1},
   danado: {label:'Producto dañado / pérdida', signo:-1},
   ajuste: {label:'Ajuste de inventario', signo:0},
   venta: {label:'Venta', signo:-1},
@@ -575,6 +575,8 @@ VIEW_RENDERERS.dashboard = function(){
   const codigosUtilizados=codigos.filter(c=>c.estado==='UTILIZADO').length;
   const referidosMes=codigos.filter(c=>c.estado==='UTILIZADO' && c.fechaUso && isSameMonth(c.fechaUso)).length;
   const stockBajo=productos.filter(p=>stockDe(p.id)<=Number(p.stockMinimo||0)).length;
+  const descuentosMes=ventas.filter(v=>isSameMonth(v.fecha)).reduce((s,v)=>s+Number(v.descuento||0),0);
+  const obsequiosMes=arr('movimientos').filter(m=>m.tipo==='regalo' && isSameMonth(m.fecha)).reduce((s,m)=>s+Math.abs(Number(m.cantidad||0)),0);
 
   const kpis=[
     {label:'Ventas de hoy', value:fmtCOP(ventasHoy)},
@@ -584,6 +586,8 @@ VIEW_RENDERERS.dashboard = function(){
     {label:'Códigos disponibles', value:codigosActivos},
     {label:'Códigos utilizados', value:codigosUtilizados},
     {label:'Referidos nuevos (mes)', value:referidosMes},
+    {label:'Descuentos otorgados (mes)', value:fmtCOP(descuentosMes)},
+    {label:'Obsequios entregados (mes)', value:obsequiosMes, sub:'unidades'},
     {label:'Stock bajo', value:stockBajo, cls: stockBajo>0?'warn':''},
   ];
 
@@ -675,6 +679,7 @@ function renderClienteDetalle(id){
   const st=statsCliente(id);
   const ventas=ventasDeCliente(id);
   const codigosGenerados=arr('codigos').filter(k=>k.clienteReferenteId===id);
+  const obsequios=arr('movimientos').filter(m=>m.tipo==='regalo' && m.clienteId===id).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
 
   return ''+
   '<button class="btn btn-ghost btn-sm section-gap" data-action="goto" data-route="clientes">← Volver a clientes</button>'+
@@ -683,6 +688,7 @@ function renderClienteDetalle(id){
       '<div><h2 style="font-size:20px;">'+esc(c.nombre)+'</h2><div class="faint">'+esc(c.telefono||'Sin teléfono')+' · Cliente desde '+fmtDate(c.fechaRegistro)+'</div></div></div>'+
     '<div class="row">'+
       '<button class="btn btn-sm" data-action="editar-cliente" data-id="'+c.id+'">Editar</button>'+
+      '<button class="btn btn-sm btn-danger" data-action="eliminar-cliente" data-id="'+c.id+'">Eliminar</button>'+
       '<button class="btn btn-primary btn-sm" data-action="go-nueva-venta" data-cliente="'+c.id+'">+ Nueva venta</button>'+
     '</div>'+
   '</div>'+
@@ -719,6 +725,18 @@ function renderClienteDetalle(id){
         '<td>'+badge(badgeEstadoCodigo(ef), ef)+'</td><td>'+esc(referido?referido.nombre:'—')+'</td><td class="faint">'+fmtDate(k.fechaUso)+'</td></tr>';
     }).join('') : '<tr class="empty-row"><td colspan="5">Este cliente aún no ha generado referidos.</td></tr>')+
     '</tbody></table></div>'+
+  '</div>'+
+
+  '<div class="panel section-gap">'+
+    '<div class="panel-head"><h2>Obsequios recibidos</h2></div>'+
+    '<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Producto</th><th class="num">Cantidad</th><th>Campaña</th><th>Motivo</th></tr></thead><tbody>'+
+    (obsequios.length? obsequios.map(m=>{
+      const p=getDoc('productos', m.productoId);
+      const camp=m.campanaId? getDoc('campanas', m.campanaId) : null;
+      return '<tr><td class="faint">'+fmtDate(m.fecha)+'</td><td>'+esc(p?p.nombre:'—')+' '+esc(p&&p.presentacion||'')+'</td>'+
+        '<td class="num tnum">'+Math.abs(m.cantidad)+'</td><td class="faint">'+esc(camp?camp.nombre:'—')+'</td><td class="faint">'+esc(m.motivo||'—')+'</td></tr>';
+    }).join('') : '<tr class="empty-row"><td colspan="5">Este cliente no ha recibido obsequios registrados a su nombre.</td></tr>')+
+    '</tbody></table></div>'+
   '</div>';
 }
 
@@ -738,6 +756,26 @@ function formCliente(existing){
   '</div>'+
   '<div class="modal-foot"><button type="button" class="btn" data-action="close-modal">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div>'+
   '</form>';
+}
+
+function formConfirmarEliminarCliente(id){
+  const c=getDoc('clientes', id);
+  if(!c) return '';
+  const st=statsCliente(id);
+  return ''+
+  '<div class="modal-head"><h3>Eliminar cliente</h3><button class="icon-btn btn btn-ghost" data-action="close-modal">✕</button></div>'+
+  '<div class="modal-body">'+
+    '<div class="banner bad">Esta acción no se puede deshacer.</div>'+
+    '<p>Vas a eliminar a <strong>'+esc(c.nombre)+'</strong>.</p>'+
+    (st.numCompras>0? '<p class="faint" style="font-size:12.5px;">Este cliente tiene '+st.numCompras+' compra(s) registrada(s). El historial de esas ventas se conserva, pero dejará de mostrar el nombre del cliente.</p>' : '')+
+  '</div>'+
+  '<div class="modal-foot"><button class="btn" data-action="close-modal">Cancelar</button><button class="btn btn-danger" onclick="confirmarEliminarCliente(\''+id+'\')">Sí, eliminar</button></div>';
+}
+async function confirmarEliminarCliente(id){
+  await Store.remove('clientes', id);
+  closeModal();
+  toast('Cliente eliminado.','ok');
+  goto('clientes');
 }
 
 /* =============================== PRODUCTOS =============================== */
@@ -843,6 +881,7 @@ VIEW_RENDERERS.inventario = function(){
 function formMovimiento(existing){
   const productos=arr('productos');
   const campanas=arr('campanas');
+  const clientes=arr('clientes').sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
   const m=existing||{};
   if(!productos.length){
     return '<div class="modal-head"><h3>Registrar movimiento</h3><button class="icon-btn btn btn-ghost" data-action="close-modal">✕</button></div>'+
@@ -850,7 +889,7 @@ function formMovimiento(existing){
       '<div class="modal-foot"><button class="btn" data-action="close-modal">Cerrar</button></div>';
   }
   const tipoInicial=m.tipo||'entrada';
-  const hints={entrada:'Se sumará al stock.', regalo:'Se restará del stock.', danado:'Se restará del stock.', ajuste:'Usa un número negativo para restar.'};
+  const hints={entrada:'Se sumará al stock.', regalo:'Se restará del stock. No genera ingreso ni queda en Ventas.', danado:'Se restará del stock.', ajuste:'Usa un número negativo para restar.'};
   return ''+
   '<div class="modal-head"><h3>'+(existing?'Editar movimiento':'Registrar movimiento de inventario')+'</h3><button class="icon-btn btn btn-ghost" data-action="close-modal">✕</button></div>'+
   '<form data-form="movimiento" data-id="'+(existing?existing.id:'')+'">'+
@@ -859,16 +898,17 @@ function formMovimiento(existing){
       productos.map(p=>'<option value="'+p.id+'"'+(m.productoId===p.id?' selected':'')+'>'+esc(p.nombre)+' '+esc(p.presentacion||'')+' (stock: '+stockDe(p.id)+')</option>').join('')+
     '</select></div>'+
     '<div class="field-row">'+
-      '<div class="field"><label for="m-tipo">Tipo de movimiento</label><select id="m-tipo" name="tipo" onchange="document.getElementById(\'m-campana-wrap\').style.display=this.value===\'regalo\'?\'flex\':\'none\'; document.getElementById(\'m-signo-hint\').textContent = this.value===\'entrada\'?\'Se sumará al stock.\':(this.value===\'ajuste\'?\'Usa un número negativo para restar.\':\'Se restará del stock.\');">'+
+      '<div class="field"><label for="m-tipo">Tipo de movimiento</label><select id="m-tipo" name="tipo" onchange="document.getElementById(\'m-regalo-wrap\').style.display=this.value===\'regalo\'?\'flex\':\'none\'; document.getElementById(\'m-signo-hint\').textContent = this.value===\'entrada\'?\'Se sumará al stock.\':(this.value===\'ajuste\'?\'Usa un número negativo para restar.\':(this.value===\'regalo\'?\'Se restará del stock. No genera ingreso ni queda en Ventas.\':\'Se restará del stock.\'));">'+
         '<option value="entrada"'+(tipoInicial==='entrada'?' selected':'')+'>Entrada de mercancía</option>'+
-        '<option value="regalo"'+(tipoInicial==='regalo'?' selected':'')+'>Regalo de campaña</option>'+
+        '<option value="regalo"'+(tipoInicial==='regalo'?' selected':'')+'>Obsequio / cortesía (campaña u otro)</option>'+
         '<option value="danado"'+(tipoInicial==='danado'?' selected':'')+'>Producto dañado / pérdida</option>'+
         '<option value="ajuste"'+(tipoInicial==='ajuste'?' selected':'')+'>Ajuste manual</option>'+
       '</select></div>'+
       '<div class="field"><label for="m-cantidad">Cantidad</label><input id="m-cantidad" name="cantidad" type="number" required step="1" value="'+(existing? Math.abs(m.cantidad) : 1)+'"><span class="hint" id="m-signo-hint">'+hints[tipoInicial]+'</span></div>'+
     '</div>'+
-    '<div class="field-row" id="m-campana-wrap" style="display:'+(tipoInicial==='regalo'?'flex':'none')+';">'+
-      '<div class="field"><label for="m-campana">Campaña relacionada</label><select id="m-campana" name="campanaId"><option value="">—</option>'+campanas.map(c=>'<option value="'+c.id+'"'+(m.campanaId===c.id?' selected':'')+'>'+esc(c.nombre)+'</option>').join('')+'</select></div>'+
+    '<div class="field-row" id="m-regalo-wrap" style="display:'+(tipoInicial==='regalo'?'flex':'none')+';">'+
+      '<div class="field"><label for="m-cliente">Cliente que lo recibe <span class="hint">opcional</span></label><select id="m-cliente" name="clienteId"><option value="">— sin especificar —</option>'+clientes.map(c=>'<option value="'+c.id+'"'+(m.clienteId===c.id?' selected':'')+'>'+esc(c.nombre)+'</option>').join('')+'</select></div>'+
+      '<div class="field"><label for="m-campana">Campaña relacionada <span class="hint">opcional</span></label><select id="m-campana" name="campanaId"><option value="">—</option>'+campanas.map(c=>'<option value="'+c.id+'"'+(m.campanaId===c.id?' selected':'')+'>'+esc(c.nombre)+'</option>').join('')+'</select></div>'+
     '</div>'+
     '<div class="field"><label for="m-fecha">Fecha</label><input id="m-fecha" name="fecha" type="date" value="'+(m.fecha? m.fecha.slice(0,10) : todayISO())+'"></div>'+
     '<div class="field"><label for="m-motivo">Motivo / nota</label><input id="m-motivo" name="motivo" value="'+esc(m.motivo||'')+'" placeholder="Ej: llegada de 50 bolsas, tarjeta Amor y Amistad…"></div>'+
@@ -945,8 +985,12 @@ function renderVentaDetalle(id){
         (v.codigoTexto?'<div><div class="faint" style="font-size:11.5px;">CÓDIGO APLICADO</div><span class="code-chip">'+esc(v.codigoTexto)+'</span></div>':'')+
       '</div>'+
       '<div class="table-wrap"><table><thead><tr><th>Producto</th><th class="num">Cantidad</th><th class="num">Precio unit.</th><th class="num">Subtotal</th></tr></thead><tbody>'+
-      (v.items||[]).map(i=>'<tr><td>'+esc(i.nombre)+' <span class="faint">'+esc(i.presentacion||'')+'</span></td><td class="num tnum">'+i.cantidad+'</td><td class="num tnum">'+fmtCOP(i.precioUnitario)+'</td><td class="num tnum">'+fmtCOP(i.subtotal)+'</td></tr>').join('')+
-      '</tbody><tfoot><tr><td colspan="3" style="text-align:right; font-weight:600;">Total</td><td class="num tnum" style="font-weight:600;">'+fmtCOP(v.total)+'</td></tr></tfoot></table></div>'+
+      (v.items||[]).map(i=>'<tr><td>'+esc(i.nombre)+' <span class="faint">'+esc(i.presentacion||'')+'</span>'+(i.regalo?' '+badge('info','OBSEQUIO'):'')+'</td><td class="num tnum">'+i.cantidad+'</td><td class="num tnum">'+fmtCOP(i.precioUnitario)+'</td><td class="num tnum">'+fmtCOP(i.subtotal)+'</td></tr>').join('')+
+      '</tbody><tfoot>'+
+        (v.descuento? '<tr><td colspan="3" style="text-align:right;" class="faint">Subtotal</td><td class="num tnum faint">'+fmtCOP(v.subtotal!=null?v.subtotal:v.total)+'</td></tr>'+
+        '<tr><td colspan="3" style="text-align:right;" class="faint">Descuento</td><td class="num tnum faint">− '+fmtCOP(v.descuento)+'</td></tr>' : '')+
+        '<tr><td colspan="3" style="text-align:right; font-weight:600;">Total</td><td class="num tnum" style="font-weight:600;">'+fmtCOP(v.total)+'</td></tr>'+
+      '</tfoot></table></div>'+
     '</div>'+
   '</div>';
 }
@@ -967,7 +1011,7 @@ function formConfirmarEliminarVenta(id){
 async function confirmarEliminarVenta(id){
   const v=getDoc('ventas', id);
   if(!v){ closeModal(); return; }
-  const movs=arr('movimientos').filter(m=>m.tipo==='venta' && m.referencia===id);
+  const movs=arr('movimientos').filter(m=>m.referencia===id);
   for(const m of movs){ await Store.remove('movimientos', m.id); }
   if(v.codigoId && getDoc('codigos', v.codigoId)){
     await Store.update('codigos', v.codigoId, {estado:'ACTIVO', fechaUso:null, clienteReferidoId:null, ventaId:null});
@@ -980,12 +1024,16 @@ async function confirmarEliminarVenta(id){
 
 function renderVentaForm(){
   if(!window.__ventaDraft){
-    window.__ventaDraft={clienteId:'', clienteModoNuevo:false, clienteNuevoNombre:'', clienteNuevoTelefono:'', fuente:'Cliente recurrente', metodoPago:'Efectivo', items:[{productoId:'',cantidad:1,precioUnitario:0}], codigoTexto:'', codigoResultado:null};
+    window.__ventaDraft={clienteId:'', clienteModoNuevo:false, clienteNuevoNombre:'', clienteNuevoTelefono:'', fuente:'Cliente recurrente', metodoPago:'Efectivo', items:[{productoId:'',cantidad:1,precioUnitario:0,regalo:false}], codigoTexto:'', codigoResultado:null, descuento:0};
   }
   const d=window.__ventaDraft;
+  if(d.descuento==null) d.descuento=0;
   const clientes=arr('clientes').sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
   const productos=arr('productos');
-  const total=(d.items||[]).reduce((s,i)=>s+(Number(i.cantidad)||0)*(Number(i.precioUnitario)||0),0);
+  const subtotal=(d.items||[]).reduce((s,i)=>s+(Number(i.cantidad)||0)*(Number(i.precioUnitario)||0),0);
+  const descuento=Math.max(0, Math.min(Number(d.descuento)||0, subtotal));
+  const total=Math.max(0, subtotal-descuento);
+  const hayObsequios = (d.items||[]).some(i=>i.regalo);
 
   const itemsHtml = d.items.map((it,idx)=>{
     const p=getDoc('productos', it.productoId);
@@ -997,8 +1045,9 @@ function renderVentaForm(){
         productos.map(pp=>'<option value="'+pp.id+'"'+(it.productoId===pp.id?' selected':'')+'>'+esc(pp.nombre)+' '+esc(pp.presentacion||'')+'</option>').join('')+
       '</select>'+(p?'<span class="hint">Disponible: '+stock+'</span>':'')+'</div>'+
       '<div class="field" style="width:90px; margin-bottom:0;"><label>Cant.</label><input type="number" min="1" step="1" value="'+it.cantidad+'" onchange="updateVentaItem('+idx+',\'cantidad\',this.value)"></div>'+
-      '<div class="field" style="width:140px; margin-bottom:0;"><label>Precio unit.</label><input type="number" min="0" step="500" value="'+it.precioUnitario+'" onchange="updateVentaItem('+idx+',\'precioUnitario\',this.value)"></div>'+
-      '<div class="field" style="width:120px; margin-bottom:0;"><label>Subtotal</label><div class="tnum" style="padding:8px 0; font-weight:600;">'+fmtCOP((Number(it.cantidad)||0)*(Number(it.precioUnitario)||0))+'</div></div>'+
+      '<div class="field" style="width:140px; margin-bottom:0;"><label>Precio unit.</label><input type="number" min="0" step="500" value="'+it.precioUnitario+'"'+(it.regalo?' disabled':'')+' onchange="updateVentaItem('+idx+',\'precioUnitario\',this.value)"></div>'+
+      '<div class="field" style="width:120px; margin-bottom:0;"><label>Subtotal</label><div class="tnum" style="padding:8px 0; font-weight:600;">'+(it.regalo?'<span class="badge info">OBSEQUIO</span>':fmtCOP((Number(it.cantidad)||0)*(Number(it.precioUnitario)||0)))+'</div></div>'+
+      '<label class="row" style="gap:5px; margin-bottom:8px; font-size:12px; color:var(--ink-soft); cursor:pointer;"><input type="checkbox"'+(it.regalo?' checked':'')+' onchange="toggleVentaItemRegalo('+idx+',this.checked)" style="width:auto;">Obsequio</label>'+
       '<button type="button" class="icon-btn btn btn-ghost" onclick="removeVentaItem('+idx+')" aria-label="Quitar" style="margin-bottom:2px;">✕</button>'+
       (excede? '<div class="banner warn" style="width:100%; margin:6px 0 0;">⚠ Cantidad mayor al stock disponible ('+stock+').</div>' : '')+
     '</div>';
@@ -1026,6 +1075,7 @@ function renderVentaForm(){
 
       '<div class="panel section-gap"><div class="panel-head"><h2>Productos</h2><button type="button" class="btn btn-sm" onclick="addVentaItem()">+ Agregar producto</button></div>'+
       '<div style="padding:0 18px;">'+ (itemsHtml || '<div class="faint" style="padding:14px 0;">Agrega productos a la venta.</div>') +'</div>'+
+      (hayObsequios? '<div class="panel-body faint" style="font-size:12px; border-top:1px solid var(--line-soft);">Los productos marcados como obsequio salen del inventario pero no se cobran ni cuentan como ingreso.</div>' : '')+
       '</div>'+
 
       '<div class="panel"><div class="panel-head"><h2>Código de referido</h2></div><div class="panel-body">'+
@@ -1040,7 +1090,11 @@ function renderVentaForm(){
     '<div class="panel" style="position:sticky; top:78px;">'+
       '<div class="panel-head"><h2>Resumen</h2></div>'+
       '<div class="panel-body">'+
-        '<div class="row between" style="margin-bottom:12px;"><span class="muted">Total</span><span class="tnum" style="font-family:var(--font-display); font-size:24px; font-weight:600;">'+fmtCOP(total)+'</span></div>'+
+        '<div class="row between" style="margin-bottom:6px;"><span class="muted">Subtotal</span><span class="tnum">'+fmtCOP(subtotal)+'</span></div>'+
+        '<div class="field" style="margin-bottom:10px;"><label>Descuento (COP)</label><input type="number" min="0" step="500" value="'+descuento+'" onchange="window.__ventaDraft.descuento=Number(this.value)||0; renderCurrentView();"></div>'+
+        (descuento>0? '<div class="row between" style="margin-bottom:6px; color:var(--danger);"><span>Descuento</span><span class="tnum">− '+fmtCOP(descuento)+'</span></div>' : '')+
+        '<div class="divider"></div>'+
+        '<div class="row between" style="margin-bottom:12px;"><span class="muted">Total a cobrar</span><span class="tnum" style="font-family:var(--font-display); font-size:24px; font-weight:600;">'+fmtCOP(total)+'</span></div>'+
         '<div class="field"><label>Método de pago</label><select onchange="window.__ventaDraft.metodoPago=this.value">'+
           METODOS_PAGO.map(m=>'<option'+(d.metodoPago===m?' selected':'')+'>'+m+'</option>').join('')+
         '</select></div>'+
@@ -1050,17 +1104,24 @@ function renderVentaForm(){
   '</div>';
 }
 
-function addVentaItem(){ window.__ventaDraft.items.push({productoId:'',cantidad:1,precioUnitario:0}); renderCurrentView(); }
+function addVentaItem(){ window.__ventaDraft.items.push({productoId:'',cantidad:1,precioUnitario:0,regalo:false}); renderCurrentView(); }
 function removeVentaItem(idx){ window.__ventaDraft.items.splice(idx,1); renderCurrentView(); }
 function updateVentaItem(idx, field, value){
   const it=window.__ventaDraft.items[idx]; if(!it) return;
   if(field==='productoId'){
     it.productoId=value;
     const p=getDoc('productos', value);
-    it.precioUnitario = p? Number(p.precioVenta||0) : 0;
+    it.precioUnitario = (p && !it.regalo)? Number(p.precioVenta||0) : 0;
   } else {
     it[field]=Number(value);
   }
+  renderCurrentView();
+}
+function toggleVentaItemRegalo(idx, checked){
+  const it=window.__ventaDraft.items[idx]; if(!it) return;
+  it.regalo=!!checked;
+  if(it.regalo){ it.precioUnitario=0; }
+  else{ const p=getDoc('productos', it.productoId); it.precioUnitario = p? Number(p.precioVenta||0) : 0; }
   renderCurrentView();
 }
 function setVentaCliente(v){
@@ -1094,14 +1155,17 @@ async function submitVenta(){
   }
   const itemsDetalle=items.map(i=>{
     const p=getDoc('productos', i.productoId);
-    const cantidad=Number(i.cantidad), precio=Number(i.precioUnitario)||Number(p?p.precioVenta:0)||0;
-    return {productoId:i.productoId, nombre:p?p.nombre:'—', presentacion:p?(p.presentacion||''):'', cantidad, precioUnitario:precio, subtotal:cantidad*precio};
+    const cantidad=Number(i.cantidad), regalo=!!i.regalo;
+    const precio = regalo? 0 : (Number(i.precioUnitario)||Number(p?p.precioVenta:0)||0);
+    return {productoId:i.productoId, nombre:p?p.nombre:'—', presentacion:p?(p.presentacion||''):'', cantidad, precioUnitario:precio, subtotal:cantidad*precio, regalo};
   });
-  const total=itemsDetalle.reduce((s,i)=>s+i.subtotal,0);
+  const subtotal=itemsDetalle.reduce((s,i)=>s+i.subtotal,0);
+  const descuento=Math.max(0, Math.min(Number(d.descuento)||0, subtotal));
+  const total=Math.max(0, subtotal-descuento);
   const fuente = codigoAplicado? 'Referido' : (d.fuente||'Otro');
-  const ventaId = await Store.add('ventas', {clienteId:clienteId||null, clienteNombre, fecha:nowISO(), items:itemsDetalle, total, metodoPago:d.metodoPago||'Efectivo', codigoId:codigoAplicado?codigoAplicado.id:null, codigoTexto:codigoAplicado?codigoAplicado.codigo:null, fuente});
+  const ventaId = await Store.add('ventas', {clienteId:clienteId||null, clienteNombre, fecha:nowISO(), items:itemsDetalle, subtotal, descuento, total, metodoPago:d.metodoPago||'Efectivo', codigoId:codigoAplicado?codigoAplicado.id:null, codigoTexto:codigoAplicado?codigoAplicado.codigo:null, fuente});
   for(const it of itemsDetalle){
-    await Store.add('movimientos', {productoId:it.productoId, tipo:'venta', cantidad:-Math.abs(it.cantidad), fecha:nowISO(), motivo:'Venta', referencia:ventaId});
+    await Store.add('movimientos', {productoId:it.productoId, tipo: it.regalo?'regalo':'venta', cantidad:-Math.abs(it.cantidad), fecha:nowISO(), motivo: it.regalo?'Obsequio en venta':'Venta', campanaId:null, clienteId: (it.regalo && clienteId)? clienteId : null, referencia:ventaId});
   }
   if(codigoAplicado){
     await Store.update('codigos', codigoAplicado.id, {estado:'UTILIZADO', fechaUso:nowISO(), clienteReferidoId:clienteId||null, ventaId});
@@ -1296,13 +1360,14 @@ VIEW_RENDERERS.reportes = function(){
 
 function reporteVentas(){
   const ventas=arr('ventas');
+  const movimientos=arr('movimientos');
   const dias=[];
   for(let i=13;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); dias.push(d); }
   const porDia=dias.map(d=>({d, total:ventas.filter(v=>isSameDay(v.fecha,d)).reduce((s,v)=>s+Number(v.total||0),0)}));
   const max=Math.max(1, ...porDia.map(x=>x.total));
 
   const porProducto={};
-  ventas.forEach(v=>(v.items||[]).forEach(i=>{ porProducto[i.nombre]=(porProducto[i.nombre]||0)+Number(i.cantidad||0); }));
+  ventas.forEach(v=>(v.items||[]).forEach(i=>{ if(!i.regalo) porProducto[i.nombre]=(porProducto[i.nombre]||0)+Number(i.cantidad||0); }));
   const topProductos=Object.entries(porProducto).sort((a,b)=>b[1]-a[1]).slice(0,10);
 
   const porCliente={};
@@ -1312,18 +1377,39 @@ function reporteVentas(){
     return {nombre: cli?cli.nombre:key.replace('__',''), total};
   });
 
+  const descuentoTotal=ventas.reduce((s,v)=>s+Number(v.descuento||0),0);
+  const obsequiosMov=movimientos.filter(m=>m.tipo==='regalo');
+  const unidadesRegaladas=obsequiosMov.reduce((s,m)=>s+Math.abs(Number(m.cantidad||0)),0);
+  const costoRegalado=obsequiosMov.reduce((s,m)=>{ const p=getDoc('productos', m.productoId); return s+Math.abs(Number(m.cantidad||0))*Number((p&&p.costo)||0); },0);
+  const porProductoRegalo={};
+  obsequiosMov.forEach(m=>{ const p=getDoc('productos', m.productoId); const n=p?p.nombre:'—'; porProductoRegalo[n]=(porProductoRegalo[n]||0)+Math.abs(Number(m.cantidad||0)); });
+  const topRegalos=Object.entries(porProductoRegalo).sort((a,b)=>b[1]-a[1]).slice(0,8);
+
   return ''+
   '<div class="panel section-gap"><div class="panel-head"><h2>Ventas — últimos 14 días</h2></div>'+
   '<div class="panel-body"><div class="bars-chart">'+
     porDia.map(x=>'<div class="bar-col"><div class="bar" style="height:'+Math.max(3,Math.round(x.total/max*100))+'%" title="'+fmtCOP(x.total)+'"></div><div class="bar-lbl">'+x.d.toLocaleDateString('es-CO',{day:'2-digit',month:'2-digit'})+'</div></div>').join('')+
   '</div></div></div>'+
-  '<div class="grid-2">'+
-    '<div class="panel"><div class="panel-head"><h2>Top productos (unidades)</h2></div><div class="table-wrap"><table><thead><tr><th>Producto</th><th class="num">Unidades</th></tr></thead><tbody>'+
+  '<div class="grid-2 section-gap">'+
+    '<div class="panel"><div class="panel-head"><h2>Top productos vendidos (unidades pagadas)</h2></div><div class="table-wrap"><table><thead><tr><th>Producto</th><th class="num">Unidades</th></tr></thead><tbody>'+
     (topProductos.length? topProductos.map(([n,q])=>'<tr><td>'+esc(n)+'</td><td class="num tnum">'+q+'</td></tr>').join('') : '<tr class="empty-row"><td colspan="2">Sin datos aún.</td></tr>')+
     '</tbody></table></div></div>'+
     '<div class="panel"><div class="panel-head"><h2>Top clientes (valor)</h2></div><div class="table-wrap"><table><thead><tr><th>Cliente</th><th class="num">Total</th></tr></thead><tbody>'+
     (topClientes.length? topClientes.map(c=>'<tr><td>'+esc(c.nombre)+'</td><td class="num tnum">'+fmtCOP(c.total)+'</td></tr>').join('') : '<tr class="empty-row"><td colspan="2">Sin datos aún.</td></tr>')+
     '</tbody></table></div></div>'+
+  '</div>'+
+  '<div class="panel"><div class="panel-head"><h2>Descuentos y obsequios (histórico)</h2></div>'+
+    '<div class="panel-body">'+
+      '<div class="row" style="gap:28px; flex-wrap:wrap; margin-bottom:16px;">'+
+        statMini(fmtCOP(descuentoTotal),'descuentos otorgados')+
+        statMini(unidadesRegaladas,'unidades regaladas')+
+        statMini(fmtCOP(costoRegalado),'costo real de obsequios')+
+      '</div>'+
+      '<div class="table-wrap"><table><thead><tr><th>Producto regalado</th><th class="num">Unidades</th></tr></thead><tbody>'+
+      (topRegalos.length? topRegalos.map(([n,q])=>'<tr><td>'+esc(n)+'</td><td class="num tnum">'+q+'</td></tr>').join('') : '<tr class="empty-row"><td colspan="2">Sin obsequios registrados todavía.</td></tr>')+
+      '</tbody></table></div>'+
+      '<div class="faint" style="font-size:12px; margin-top:10px;">El costo se calcula con el costo real del producto (no el precio de venta), incluyendo obsequios dentro de una venta y los registrados desde Inventario.</div>'+
+    '</div>'+
   '</div>';
 }
 
@@ -1398,6 +1484,7 @@ document.addEventListener('click', function(e){
 
     case 'nuevo-cliente': openModal(formCliente(null)); break;
     case 'editar-cliente': openModal(formCliente(getDoc('clientes', id))); break;
+    case 'eliminar-cliente': openModal(formConfirmarEliminarCliente(id)); break;
     case 'ver-cliente': goto('clientes/'+id); break;
 
     case 'nuevo-producto': openModal(formProducto(null)); break;
@@ -1449,7 +1536,7 @@ document.addEventListener('submit', function(e){
     const cfg=MOV_TIPOS[data.tipo];
     if(data.tipo!=='ajuste') cantidad = Math.abs(cantidad) * (cfg && cfg.signo<0? -1 : 1);
     const existente = form.dataset.id? getDoc('movimientos', form.dataset.id) : null;
-    const payload={productoId:data.productoId, tipo:data.tipo, cantidad, fecha:(data.fecha?data.fecha:todayISO())+'T'+new Date().toTimeString().slice(0,8), motivo:data.motivo||'', campanaId:data.campanaId||null, referencia: existente?existente.referencia:null};
+    const payload={productoId:data.productoId, tipo:data.tipo, cantidad, fecha:(data.fecha?data.fecha:todayISO())+'T'+new Date().toTimeString().slice(0,8), motivo:data.motivo||'', campanaId:data.campanaId||null, clienteId:data.clienteId||null, referencia: existente?existente.referencia:null};
     const done = form.dataset.id? Store.update('movimientos', form.dataset.id, payload) : Store.add('movimientos', payload);
     done.then(()=>{ toast(form.dataset.id?'Movimiento actualizado.':'Movimiento registrado.','ok'); closeModal(); });
   }
